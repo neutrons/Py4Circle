@@ -3,6 +3,9 @@ import numpy as np
 import mplgraphicsview2d
 from matplotlib.widgets import LassoSelector
 from matplotlib.path import Path
+from matplotlib.widgets import RectangleSelector
+import matplotlib.pyplot as plt
+
 
 
 class SelectFromCollection(object):
@@ -72,26 +75,87 @@ class DetectorView(mplgraphicsview2d.MplGraphicsView2D):
         """
         super(DetectorView, self).__init__(parent)
 
+        self.current_ax = self._myCanvas.axes
+
+        # connect events and their handlers
+        self._myCanvas.mpl_connect('button_press_event', self.on_mouse_press_event)
+        self._myCanvas.mpl_connect('key_press_event', self.move_rectagular)
+
+        self._myRS = RectangleSelector(
+                                                self.current_ax, self.line_select_callback,
+                                                drawtype='box',
+                                                useblit=False,
+                                                # NOTE: this is the key for leaving rectangular on the map
+                                                button=[1, 3],  # don't use middle button
+                                                minspanx=5, minspany=5,
+                                                spancoords='pixels',
+                                                interactive=True)
+
         return
 
+    def toggle_selector(self, event):
+        print(' Key pressed.')
+        if event.key in ['Q', 'q'] and self._myRS.active:
+            print(' RectangleSelector deactivated.')
+            self._myRS.set_active(False)
+        if event.key in ['A', 'a'] and not self._myRS.active:
+            print(' RectangleSelector activated.')
+            self._myRS.set_active(True)
 
-if __name__ == '__main__':
-        import matplotlib.pyplot as plt
+    def move_rectangular_right(self):
+        w = self._lastRect.get_width()
+        x = self._lastRect.get_x()
+        self._lastRect.set_x(x + w * 0.1)
+        #  plt.show()
 
-        plt.ion()
-        data = np.random.rand(100, 3)
+    def move_rectagular(self, event):
+        print event.key
+        if event.key in ['R', 'r']:
+            print('move to the right')
+            self.move_rectangular_right()
 
-        subplot_kw = dict(xlim=(0, 1), ylim=(0, 1), autoscale_on=False)
-        fig, ax = plt.subplots(subplot_kw=subplot_kw)
+    def line_select_callback(self, eclick, erelease):
+        'eclick and erelease are the press and release events'
+        x1, y1 = eclick.xdata, eclick.ydata
+        x2, y2 = erelease.xdata, erelease.ydata
+        print("(%3.2f, %3.2f) --> (%3.2f, %3.2f)" % (x1, y1, x2, y2))
+        print(" The button you used were: %s %s" % (eclick.button, erelease.button))
 
-        pts = ax.scatter(data[:, 0], data[:, 1], s=80, c=data[:, 2])
-        selector = SelectFromCollection(ax, pts)
+        self._lastRect = plt.Rectangle((min(x1, x2), min(y1, y2)), np.abs(x1 - x2), np.abs(y1 - y2),
+                             fill=False)
 
-        plt.draw()
-        input('Press Enter to accept selected points')
-        print("Selected points:")
-        print(selector.xys[selector.ind])
-        selector.disconnect()
+        self.current_ax.add_patch(self._lastRect)
 
-        # Block end of script so you can check that the lasso is disconnected.
-        input('Press Enter to quit')
+        last_rect = self._lastRect
+
+        return self._lastRect
+
+    def on_mouse_press_event(self, event):
+        """
+
+        @return:
+        """
+        print ('pressed: ', event.xdata, event.ydata)
+
+        self.toggle_selector(event)
+
+# if __name__ == '__main__':
+#         import matplotlib.pyplot as plt
+#
+#         plt.ion()
+#         data = np.random.rand(100, 3)
+#
+#         subplot_kw = dict(xlim=(0, 1), ylim=(0, 1), autoscale_on=False)
+#         fig, ax = plt.subplots(subplot_kw=subplot_kw)
+#
+#         pts = ax.scatter(data[:, 0], data[:, 1], s=80, c=data[:, 2])
+#         selector = SelectFromCollection(ax, pts)
+#
+#         plt.draw()
+#         input('Press Enter to accept selected points')
+#         print("Selected points:")
+#         print(selector.xys[selector.ind])
+#         selector.disconnect()
+#
+#         # Block end of script so you can check that the lasso is disconnected.
+#         input('Press Enter to quit')
