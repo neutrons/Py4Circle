@@ -21,7 +21,7 @@
        <bool>true</bool>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="tab">
        <attribute name="title">
@@ -1040,6 +1040,33 @@ p, li { white-space: pre-wrap; }
         </item>
        </layout>
       </widget>
+      <widget class="QWidget" name="tabAnalysis">
+       <attribute name="title">
+        <string>Analysis</string>
+       </attribute>
+       <layout class="QGridLayout" name="gridLayout_5">
+        <item row="1" column="0">
+         <widget class="IPyAnalysisWidget" name="widget_analysis" native="true"/>
+        </item>
+        <item row="0" column="0">
+         <layout class="QHBoxLayout" name="horizontalLayout_3">
+          <item>
+           <widget class="QTableView" name="tableView">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QGraphicsView" name="graphicsView"/>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
       <widget class="QWidget" name="tab_recordManagemet">
        <attribute name="title">
         <string>Advanced Setup</string>
@@ -1478,6 +1505,12 @@ p, li { white-space: pre-wrap; }
    <class>DetectorView</class>
    <extends>QGraphicsView</extends>
    <header>detectorview.h</header>
+  </customwidget>
+  <customwidget>
+   <class>IPyAnalysisWidget</class>
+   <extends>QWidget</extends>
+   <header>ipythonanalysiswidget.h</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources/>
