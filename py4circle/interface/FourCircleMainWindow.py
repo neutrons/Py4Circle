@@ -2,7 +2,7 @@ from PyQt4 import QtCore, QtGui
 import os
 import gui.MainWindow_ui as MainWindow_ui
 import guiutility as gutil
-
+import py4circle.lib.polarized_neutron_processor as polarized_neutron_processor
 
 class FourCircleMainWindow(QtGui.QMainWindow):
     """
@@ -15,6 +15,9 @@ class FourCircleMainWindow(QtGui.QMainWindow):
         super(FourCircleMainWindow, self).__init__(None)
 
         # define class variable
+        self._myControl = polarized_neutron_processor.FourCirclePolarizedNeutronProcessor()
+        self._expNumber = None
+        self._iptsNumber = None
 
         # set up UI
         self.ui = MainWindow_ui.Ui_MainWindow()
@@ -46,7 +49,7 @@ class FourCircleMainWindow(QtGui.QMainWindow):
         # get data directory, working directory and data server URL from GUI
         local_data_dir = str(self.ui.lineEdit_localSpiceDir.text()).strip()
         working_dir = str(self.ui.lineEdit_workDir.text()).strip()
-        pre_process_dir = str(self.ui.lineEdit_preprocessedDir.text()).strip()
+        # pre_process_dir = str(self.ui.lineEdit_preprocessedDir.text()).strip()
 
         # set to my controller
         status, err_msg = self._myControl.set_local_data_dir(local_data_dir)
@@ -89,20 +92,20 @@ class FourCircleMainWindow(QtGui.QMainWindow):
         # END-IF-ELSE
 
         # preprocess directory
-        if len(pre_process_dir) == 0:
-            # user does not specify
-            self._myControl.pre_processed_dir = None
-        elif os.path.exists(pre_process_dir):
-            # user specifies a valid directory
-            self._myControl.pre_processed_dir = pre_process_dir
-            self.ui.lineEdit_preprocessedDir.setStyleSheet('color: green;')
-        else:
-            # user specifies a non-exist directory. make an error message
-            self.pop_one_button_dialog('Pre-processed directory {0} ({1}) does not exist.'
-                                       ''.format(pre_process_dir, type(pre_process_dir)))
-            self._myControl.pre_processed_dir = None
-            self.ui.lineEdit_preprocessedDir.setStyleSheet('color: red;')
-        # END-IF
+        # if len(pre_process_dir) == 0:
+        #     # user does not specify
+        #     self._myControl.pre_processed_dir = None
+        # elif os.path.exists(pre_process_dir):
+        #     # user specifies a valid directory
+        #     self._myControl.pre_processed_dir = pre_process_dir
+        #     self.ui.lineEdit_preprocessedDir.setStyleSheet('color: green;')
+        # else:
+        #     # user specifies a non-exist directory. make an error message
+        #     self.pop_one_button_dialog('Pre-processed directory {0} ({1}) does not exist.'
+        #                                ''.format(pre_process_dir, type(pre_process_dir)))
+        #     self._myControl.pre_processed_dir = None
+        #     self.ui.lineEdit_preprocessedDir.setStyleSheet('color: red;')
+        # # END-IF
 
         if len(error_message) > 0:
             self.pop_one_button_dialog(error_message)
@@ -188,6 +191,8 @@ class FourCircleMainWindow(QtGui.QMainWindow):
                 self.ui.lineEdit_localSpiceDir.setText(default_data_dir)
                 # find out the detector type
                 status, ret_obj = self._myControl.find_detector_size(default_data_dir, exp_number)
+            else:
+                print '[DB] Default data directory {0} does not exist.'.format(default_data_dir)
 
         else:
             err_msg = ret_obj
@@ -198,29 +203,27 @@ class FourCircleMainWindow(QtGui.QMainWindow):
         self.ui.tabWidget.setCurrentIndex(0)
 
         # set the instrument geometry constants
-        status, ret_obj = gutil.parse_float_editors([self.ui.lineEdit_defaultSampleDetDistance,
-                                                     self.ui.lineEdit_pixelSizeX,
-                                                     self.ui.lineEdit_pixelSizeY],
-                                                    allow_blank=False)
-        if status:
-            default_det_sample_distance, pixel_x_size, pixel_y_size = ret_obj
-            self._myControl.set_default_detector_sample_distance(default_det_sample_distance)
-            self._myControl.set_default_pixel_size(pixel_x_size, pixel_y_size)
-        else:
-            self.pop_one_button_dialog('[ERROR] Unable to parse default instrument geometry constants '
-                                       'due to %s.' % str(ret_obj))
-            return
+        # status, ret_obj = gutil.parse_float_editors([self.ui.lineEdit_pixelSizeX,
+        #                                              self.ui.lineEdit_pixelSizeY],
+        #                                             allow_blank=False)
+        # if status:
+        #     self._myControl.set_default_detector_sample_distance(default_det_sample_distance)
+        #     self._myControl.set_default_pixel_size(pixel_x_size, pixel_y_size)
+        # else:
+        #     self.pop_one_button_dialog('[ERROR] Unable to parse default instrument geometry constants '
+        #                                'due to %s.' % str(ret_obj))
+        #     return
 
-        # set the detector center
-        det_center_str = str(self.ui.lineEdit_defaultDetCenter.text())
-        try:
-            terms = det_center_str.split(',')
-            center_row = int(terms[0])
-            center_col = int(terms[1])
-            self._myControl.set_detector_center(exp_number, center_row, center_col, default=True)
-        except (IndexError, ValueError) as error:
-            self.pop_one_button_dialog('[ERROR] Unable to parse default detector center %s due to %s.'
-                                       '' % (det_center_str, str(error)))
+        # # set the detector center
+        # det_center_str = str(self.ui.lineEdit_defaultDetCenter.text())
+        # try:
+        #     terms = det_center_str.split(',')
+        #     center_row = int(terms[0])
+        #     center_col = int(terms[1])
+        #     self._myControl.set_detector_center(exp_number, center_row, center_col, default=True)
+        # except (IndexError, ValueError) as error:
+        #     self.pop_one_button_dialog('[ERROR] Unable to parse default detector center %s due to %s.'
+        #                                '' % (det_center_str, str(error)))
 
         return
 
@@ -289,4 +292,14 @@ class FourCircleMainWindow(QtGui.QMainWindow):
 
         return
 
+    def pop_one_button_dialog(self, message):
+        """ Pop up a one-button dialog
+        :param message:
+        :return:
+        """
+        assert isinstance(message, str), 'Input message %s must a string but not %s.' \
+                                         '' % (str(message), type(message))
+        QtGui.QMessageBox.information(self, '4-circle Data Reduction', message)
+
+        return
 
