@@ -18,6 +18,8 @@ class FourCircleMainWindow(QtGui.QMainWindow):
         self._myControl = polarized_neutron_processor.FourCirclePolarizedNeutronProcessor()
         self._expNumber = None
         self._iptsNumber = None
+        
+        self._homeDir = os.path.expanduser('~')
 
         # set up UI
         self.ui = MainWindow_ui.Ui_MainWindow()
@@ -34,6 +36,10 @@ class FourCircleMainWindow(QtGui.QMainWindow):
                      self.do_browse_local_spice_data)
         self.connect(self.ui.pushButton_plotRawPt, QtCore.SIGNAL('clicked()'),
                      self.do_plot_pt_raw)
+
+        # about list all scans
+        self.connect(self.ui.pushButton_survey, QtCore.SIGNAL('clicked()'),
+                     self.do_survey)
 
         return
 
@@ -224,6 +230,36 @@ class FourCircleMainWindow(QtGui.QMainWindow):
         # except (IndexError, ValueError) as error:
         #     self.pop_one_button_dialog('[ERROR] Unable to parse default detector center %s due to %s.'
         #                                '' % (det_center_str, str(error)))
+
+        return
+    
+    def do_survey(self):
+        """
+        Purpose: survey for the strongest reflections
+        :return:
+        """
+        # Get experiment number
+        exp_number = int(self.ui.lineEdit_exp.text())
+        status, ret_obj = gutil.parse_integers_editors([self.ui.lineEdit_surveyStartPt,
+                                                        self.ui.lineEdit_surveyEndPt])
+        if status is False:
+            err_msg = ret_obj
+            self.pop_one_button_dialog(err_msg)
+        start_scan = ret_obj[0]
+        end_scan = ret_obj[1]
+
+        max_number = int(self.ui.lineEdit_numSurveyOutput.text())
+
+        # Get value
+        status, ret_obj, err_msg = self._myControl.survey(exp_number, start_scan, end_scan)
+        if status is False:
+            self.pop_one_button_dialog(ret_obj)
+            return
+        elif err_msg != '':
+            self.pop_one_button_dialog(err_msg)
+        scan_sum_list = ret_obj
+        self.ui.tableWidget_surveyTable.set_survey_result(scan_sum_list)
+        self.ui.tableWidget_surveyTable.show_reflections(max_number)
 
         return
 
