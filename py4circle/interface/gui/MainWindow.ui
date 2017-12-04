@@ -526,7 +526,7 @@ p, li { white-space: pre-wrap; }
                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the selected peak to view and switch to tab 'View Raw Data'&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                  <property name="text">
-                  <string>Set ROI</string>
+                  <string>View Scan</string>
                  </property>
                 </widget>
                </item>

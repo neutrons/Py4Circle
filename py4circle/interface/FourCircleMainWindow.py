@@ -8,6 +8,12 @@ class FourCircleMainWindow(QtGui.QMainWindow):
     """
     blabla
     """
+    TabPage = {'ROI Setup': 1,
+               'Calculate UB': 3,
+               'UB Matrix': 4,
+               'Peak Integration': 6,
+               'Scans Processing': 5}
+
     def __init__(self):
         """
 
@@ -25,6 +31,8 @@ class FourCircleMainWindow(QtGui.QMainWindow):
         self.ui = MainWindow_ui.Ui_MainWindow()
         self.ui.setupUi(self)
 
+        self._init_widgets()
+
         # link
         self.connect(self.ui.pushButton_setExp, QtCore.SIGNAL('clicked()'),
                      self.do_set_experiment)
@@ -37,9 +45,33 @@ class FourCircleMainWindow(QtGui.QMainWindow):
         self.connect(self.ui.pushButton_plotRawPt, QtCore.SIGNAL('clicked()'),
                      self.do_plot_pt_raw)
 
+        # about set up ROI for polarized neutron
+        self.connect(self.ui.pushButton_viewSurveyPeak, QtCore.SIGNAL('clicked()'),
+                     self.do_view_survey_peak)
+        self.connect(self.ui.pushButton_prevPtNumber, QtCore.SIGNAL('clicked()'),
+                     self.do_plot_prev_pt_raw)
+        self.connect(self.ui.pushButton_nextPtNumber, QtCore.SIGNAL('clicked()'),
+                     self.do_plot_next_pt_raw)
+
         # about list all scans
         self.connect(self.ui.pushButton_survey, QtCore.SIGNAL('clicked()'),
                      self.do_survey)
+
+        return
+
+    def _init_widgets(self):
+        """
+        """
+        self.ui.tableWidget_surveyTable.setup()
+
+        # debug setup ----
+        self.ui.lineEdit_exp.setText('640')
+        self.ui.lineEdit_workDir.setText('/tmp')
+        self.ui.lineEdit_surveyStartPt.setText('10')
+        self.ui.lineEdit_surveyEndPt.setText('30')
+        self.ui.lineEdit_numSurveyOutput.setText('50')
+
+        # FIXME - Remove this part after testing
 
         return
 
@@ -145,6 +177,69 @@ class FourCircleMainWindow(QtGui.QMainWindow):
             self.pop_one_button_dialog(error_message)
         else:
             self.ui.lineEdit_workDir.setText(work_dir)
+
+        return
+
+    def do_plot_next_pt_raw(self):
+        """ Plot the Pt.
+        """
+        # Get measurement pt and the file number
+        status, ret_obj = gutil.parse_integers_editors([self.ui.lineEdit_exp,
+                                                        self.ui.lineEdit_run,
+                                                        self.ui.lineEdit_rawDataPtNo])
+        if status is True:
+            exp_no = ret_obj[0]
+            scan_no = ret_obj[1]
+            pt_no = ret_obj[2]
+        else:
+            self.pop_one_button_dialog(ret_obj)
+            return
+
+        # Next Pt
+        pt_no += 1
+        # get last Pt. number
+        status, last_pt_no = self._myControl.get_pt_numbers(exp_no, scan_no)
+        if status is False:
+            error_message = last_pt_no
+            self.pop_one_button_dialog('Unable to access Spice table for scan %d. Reason" %s.' % (
+                scan_no, error_message))
+        if pt_no > last_pt_no:
+            self.pop_one_button_dialog('Pt. = %d is the last one of scan %d.' % (pt_no, scan_no))
+            return
+        else:
+            self.ui.lineEdit_rawDataPtNo.setText('%d' % pt_no)
+
+        # Plot
+        self._plot_raw_xml_2d(exp_no, scan_no, pt_no)
+
+        return
+
+
+    def do_plot_prev_pt_raw(self):
+        """ Plot the Pt.
+        """
+        # Get measurement pt and the file number
+        status, ret_obj = gutil.parse_integers_editors([self.ui.lineEdit_exp,
+                                                        self.ui.lineEdit_run,
+                                                        self.ui.lineEdit_rawDataPtNo])
+        if status is True:
+            exp_no = ret_obj[0]
+            scan_no = ret_obj[1]
+            pt_no = ret_obj[2]
+        else:
+            self.pop_one_button_dialog(ret_obj)
+            return
+
+        # Previous one
+        pt_no -= 1
+        if pt_no <= 0:
+            self.pop_one_button_dialog('Pt. = 1 is the first one.')
+            return
+        else:
+            self.ui.lineEdit_rawDataPtNo.setText('%d' % pt_no)
+
+        # Plot
+        self._plot_raw_xml_2d(exp_no, scan_no, pt_no)
 
         return
 
@@ -263,20 +358,39 @@ class FourCircleMainWindow(QtGui.QMainWindow):
 
         return
 
+    def do_view_survey_peak(self):
+        """ View selected peaks from survey table
+        Requirements: one and only 1 run is selected
+        Guarantees: the scan number and pt number that are selected will be set to
+            tab 'View Raw' and the tab is switched.
+        :return:
+        """
+        # get values
+        try:
+            scan_num, pt_num = self.ui.tableWidget_surveyTable.get_selected_run_surveyed()
+        except RuntimeError as err:
+            self.pop_one_button_dialog(str(err))
+            return
+
+        # clear selection
+        self.ui.tableWidget_surveyTable.select_all_rows(False)
+
+        # switch tab    FourCircleMainWindow
+        self.ui.tabWidget.setCurrentIndex(FourCircleMainWindow.TabPage['ROI Setup'])
+        self.ui.lineEdit_run.setText(str(scan_num))
+        self.ui.lineEdit_rawDataPtNo.setText(str(pt_num))
+
+        return
+
     def _plot_raw_xml_2d(self, exp_no, scan_no, pt_no):
         """ Plot raw workspace from XML file for a measurement/pt.
         """
         # Check and load SPICE table file
         does_exist = self._myControl.does_spice_loaded(exp_no, scan_no)
         if does_exist is False:
-            # Download data
-            status, error_message = self._myControl.download_spice_file(exp_no, scan_no, over_write=False)
-            if status is True:
-                status, error_message = self._myControl.load_spice_scan_file(exp_no, scan_no)
-                if status is False and self._allowDownload is False:
-                    self.pop_one_button_dialog(error_message)
-                    return
-            else:
+            # Load Spice (.dat) file (table)
+            status, error_message = self._myControl.load_spice_scan_file(exp_no, scan_no)
+            if status is False and self._allowDownload is False:
                 self.pop_one_button_dialog(error_message)
                 return
         # END-IF(does_exist)
@@ -285,11 +399,6 @@ class FourCircleMainWindow(QtGui.QMainWindow):
         does_exist = self._myControl.does_raw_loaded(exp_no, scan_no, pt_no)
 
         if does_exist is False:
-            # Check whether needs to download
-            status, error_message = self._myControl.download_spice_xml_file(scan_no, pt_no, exp_no=exp_no)
-            if status is False:
-                self.pop_one_button_dialog(error_message)
-                return
             # Load SPICE xml file
             status, error_message = self._myControl.load_spice_xml_file(exp_no, scan_no, pt_no)
             if status is False:

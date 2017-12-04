@@ -1109,12 +1109,15 @@ class Qt4MplCanvas(FigureCanvas):
         import matplotlib.pyplot as plt
 
         plt.ion()
-        data = np.random.rand(100, 3)
+        data = np.random.rand(256, 3)
 
         #    subplot_kw = dict(xlim=(0, 1), ylim=(0, 1), autoscale_on=False)
         #   fig, ax = plt.subplots(subplot_kw=subplot_kw)
 
-        pts = self.axes.scatter(data[:, 0], data[:, 1], s=80, c=data[:, 2])
+        pts = self.axes.scatter(data[:, 0], data[:, 1], s=80, c=data[:, 2],
+                                marker='s')
+        print pts
+        print dir(pts)
 
         return
 
@@ -1238,7 +1241,7 @@ class Qt4MplCanvas(FigureCanvas):
         :return:
         """
         # Release the current image
-        self.axes.hold(holdprev)
+        # self.axes.hold(holdprev)
 
         # Do plot
         # y ticks will be shown on line 1, 4, 23, 24 and 30
@@ -1246,7 +1249,28 @@ class Qt4MplCanvas(FigureCanvas):
         # self.axes.set_yticks(yticks)
 
         # show image
-        imgplot = self.axes.imshow(array2d, extent=[xmin, xmax, ymin, ymax], interpolation='none')
+        # imgplot = self.axes.imshow(array2d, extent=[xmin, xmax, ymin, ymax], interpolation='none')
+        array2d = np.ndarray(shape=(100, 3), dtype='float')
+        array2d[0][0] = 0
+        array2d[0][1] = 0
+        array2d[0][2] = 1
+
+        import random
+        for index in range(1, 98):
+            x = random.randint(1, 255)
+            y = random.randint(1, 255)
+            z = random.randint(1, 20000)
+            array2d[index][0] = float(x)
+            array2d[index][1] = float(y)
+            array2d[index][2] = float(z)
+
+        array2d[99][0] = 255
+        array2d[99][1] = 255
+        array2d[99][2] = 1
+
+        self.axes.scatter(array2d[:, 0], array2d[:, 1], s=80, c=array2d[:, 2],
+                          marker='s')
+
         # set y ticks as an option:
         if yticklabels is not None:
             # it will always label the first N ticks even image is zoomed in
@@ -1256,13 +1280,13 @@ class Qt4MplCanvas(FigureCanvas):
         # explicitly set aspect ratio of the image
         self.axes.set_aspect('auto')
 
-        # Set color bar.  plt.colorbar() does not work!
-        if self._colorBar is None:
-            # set color map type
-            imgplot.set_cmap('spectral')
-            self._colorBar = self.fig.colorbar(imgplot)
-        else:
-            self._colorBar.update_bruteforce(imgplot)
+        # # Set color bar.  plt.colorbar() does not work!
+        # if self._colorBar is None:
+        #     # set color map type
+        #     imgplot.set_cmap('spectral')
+        #     self._colorBar = self.fig.colorbar(imgplot)
+        # else:
+        #     self._colorBar.update_bruteforce(imgplot)
 
         # Flush...
         self._flush()

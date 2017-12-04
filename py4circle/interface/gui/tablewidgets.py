@@ -234,12 +234,12 @@ class ScanListTable(tableBase.NTableWidget):
         Init setup
         :return:
         """
-        self.init_setup(ScanSurveyTable.Table_Setup)
+        self.init_setup(ScanListTable.Table_Setup)
         self.set_status_column_name('Selected')
 
-        self._colIndexH = ScanSurveyTable.Table_Setup.index(('H', 'float'))
-        self._colIndexK = ScanSurveyTable.Table_Setup.index(('K', 'float'))
-        self._colIndexL = ScanSurveyTable.Table_Setup.index(('L', 'float'))
+        self._colIndexH = ScanListTable.Table_Setup.index(('H', 'float'))
+        self._colIndexK = ScanListTable.Table_Setup.index(('K', 'float'))
+        self._colIndexL = ScanListTable.Table_Setup.index(('L', 'float'))
 
         return
 
