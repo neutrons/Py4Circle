@@ -95,6 +95,14 @@ class DetectorView(mplgraphicsview2d.MplGraphicsView2D):
 
         return
 
+    def clear_canvas(self):
+        """
+        blabla
+        """
+        print 'Before: ', self._myCanvas.axes
+        super(DetectorView, self).clear_canvas()
+        print 'After : ', self._myCanvas.axes
+
     def toggle_selector(self, event):
         """
         toggle the state of selector (on or off)
@@ -146,7 +154,7 @@ class DetectorView(mplgraphicsview2d.MplGraphicsView2D):
 
         new_rect = plt.Rectangle((min(x1, x2), min(y1, y2)), np.abs(x1 - x2), np.abs(y1 - y2),
                                  fill=True, alpha=0.2,
-                                 color='white', label='11111',
+                                 color='blue', label='11111',
                                  linewidth=5)
         patch_return = self._myCanvas.axes.add_patch(new_rect)
         print 'Why cannot I draw a rectangular??? return = {0}.  Rectangualr = {1}'.format(patch_return, new_rect)

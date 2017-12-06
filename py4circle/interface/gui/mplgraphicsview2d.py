@@ -1114,12 +1114,24 @@ class Qt4MplCanvas(FigureCanvas):
         #    subplot_kw = dict(xlim=(0, 1), ylim=(0, 1), autoscale_on=False)
         #   fig, ax = plt.subplots(subplot_kw=subplot_kw)
 
-        pts = self.axes.scatter(data[:, 0], data[:, 1], s=80, c=data[:, 2],
-                                marker='s')
-        print pts
-        print dir(pts)
+        self.pts = self.axes.scatter(data[:, 0], data[:, 1], s=80, c=data[:, 2],
+                                     marker='s')
+        # print pts
+        # print dir(pts)
+        # print type(pts), pts.__class__.__name__
+
+        self.pts.set_offsets(data)
 
         return
+
+    def update_2d(self):
+        """
+
+        @return:
+        """
+        # TODO/FIXME/ASAP/ASAP
+        data = np.random.rand(10, 3)
+        self.pts.set_offsets(data)
 
     @property
     def is_legend_on(self):
