@@ -410,9 +410,6 @@ class FourCircleMainWindow(QtGui.QMainWindow):
         raw_det_data = self._myControl.get_raw_detector_counts(exp_no, scan_no, pt_no)
         # raw_det_data = numpy.rot90(raw_det_data, 1)
 
-        # FIXME TODO Experiment not to clear canvas
-        # self.ui.graphicsView_detector2dPlot.clear_canvas()
-
         # get the configuration of detector from GUI
         #  FIXME/TODO/ISSUE/NOW/TODAY - use the detector size wrong!
         if 0:
@@ -422,12 +419,13 @@ class FourCircleMainWindow(QtGui.QMainWindow):
             x_max, y_max = 256, 256
 
         # TODO/ISSUE/NOW/ASAP - Debugging now
-        debug = True
-        if debug:
-            self.ui.graphicsView_detector2dPlot.canvas().update_2d()
+        if self.ui.graphicsView_detector2dPlot.has_image_on_canvas():
+            self.ui.graphicsView_detector2dPlot.canvas().update_image(array2d=raw_det_data)
         else:
-            self.ui.graphicsView_detector2dPlot.add_plot_2d(raw_det_data, x_min=0, x_max=x_max, y_min=0, y_max=y_max,
-                                                        hold_prev_image=False)
+            self.ui.graphicsView_detector2dPlot.add_2d_plot(raw_det_data, x_min=0, x_max=x_max, y_min=0, y_max=y_max,
+                                                            hold_prev_image=False, plot_type='image')
+        # END-IF-ELSE
+
         status, roi = self._myControl.get_region_of_interest(exp_no, scan_number=None)
         if status:
             self.ui.graphicsView_detector2dPlot.add_roi(roi[0], roi[1])
