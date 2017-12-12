@@ -71,6 +71,9 @@ class FourCircleMainWindow(QtGui.QMainWindow):
         self.ui.lineEdit_surveyEndPt.setText('30')
         self.ui.lineEdit_numSurveyOutput.setText('50')
 
+        self.ui.label_14.setStyleSheet('color: red')
+        self.ui.radioButton_roiNo1.setStyleSheet('color: red')
+
         # FIXME - Remove this part after testing
 
         return

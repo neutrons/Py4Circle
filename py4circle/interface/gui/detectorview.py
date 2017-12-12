@@ -67,6 +67,8 @@ class DetectorView(mplgraphicsview2d.MplGraphicsView2D):
     """
     Detector counts 2D plot
     """
+    ROI_Colors = ['red', 'white', 'black', 'green']
+
     def __init__(self, parent):
         """
 
@@ -92,6 +94,8 @@ class DetectorView(mplgraphicsview2d.MplGraphicsView2D):
                                        interactive=True,
                                        lineprops=line_props)
 
+        # determine ROI rectangular color
+        self._rectColorIndex = 0
 
         return
 
@@ -99,9 +103,9 @@ class DetectorView(mplgraphicsview2d.MplGraphicsView2D):
         """
         blabla
         """
-        print 'Before: ', self._myCanvas.axes
+        print 'Before Clear Canvas: ', self._myCanvas.axes
         super(DetectorView, self).clear_canvas()
-        print 'After : ', self._myCanvas.axes
+        print 'After Clear Canvas: ', self._myCanvas.axes
 
     def toggle_selector(self, event):
         """
@@ -152,9 +156,12 @@ class DetectorView(mplgraphicsview2d.MplGraphicsView2D):
         print("(%3.2f, %3.2f) --> (%3.2f, %3.2f)" % (x1, y1, x2, y2))
         print(" The button you used were: %s %s" % (eclick.button, erelease.button))
 
+        color_index = self._rectColorIndex % len(DetectorView.ROI_Colors)
+        roi_color = DetectorView.ROI_Colors[color_index]
+        self._rectColorIndex += 1
         new_rect = plt.Rectangle((min(x1, x2), min(y1, y2)), np.abs(x1 - x2), np.abs(y1 - y2),
                                  fill=True, alpha=0.2,
-                                 color='blue', label='11111',
+                                 color=roi_color, label='11111',
                                  linewidth=5)
         patch_return = self._myCanvas.axes.add_patch(new_rect)
         print 'Why cannot I draw a rectangular??? return = {0}.  Rectangualr = {1}'.format(patch_return, new_rect)
