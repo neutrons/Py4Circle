@@ -7,6 +7,7 @@ from matplotlib.widgets import RectangleSelector
 import matplotlib.pyplot as plt
 
 
+# TODO FIXME Delete it?
 class SelectFromCollection(object):
     """Select indices from a matplotlib collection using `LassoSelector`.
 
@@ -67,7 +68,7 @@ class DetectorView(mplgraphicsview2d.MplGraphicsView2D):
     """
     Detector counts 2D plot
     """
-    ROI_Colors = ['red', 'white', 'black', 'green']
+    ROI_Colors = ['red', 'green', 'blue', 'orange', 'yellow', 'black']
 
     def __init__(self, parent):
         """
@@ -176,14 +177,13 @@ class DetectorView(mplgraphicsview2d.MplGraphicsView2D):
                                  color=roi_color, label='ROI {0}'.format(color_index),
                                  linewidth=5)
         patch_return = self._myCanvas.axes.add_patch(new_rect)
+        print ('[DB...CURIOSITY: Patch type: {0}'.format(type(patch_return)))
 
         # record rectangular
         self._roiCollections[color_index] = new_rect
        
         # color index increment
         self._rectColorIndex += 1
-
-
         # print 'Why cannot I draw a rectangular??? return = {0}.  Rectangualr = {1}'.format(patch_return, new_rect)
 
         self._lastRect = new_rect
@@ -214,9 +214,9 @@ class DetectorView(mplgraphicsview2d.MplGraphicsView2D):
             roi_index_list = [roi_index]
         # END-IF-ELSE
 
-        # romove rectagular
+        # remove rectagular
         for roi_index in roi_index_list:
-            self.remove_rectangular(self._roiCollections[roi_index])
+            self._roiCollections[roi_index].remove()
             del self._roiCollections[roi_index]
 
         # reset roi index

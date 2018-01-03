@@ -4,6 +4,7 @@ import gui.MainWindow_ui as MainWindow_ui
 import guiutility as gutil
 import py4circle.lib.polarized_neutron_processor as polarized_neutron_processor
 
+
 class FourCircleMainWindow(QtGui.QMainWindow):
     """
     blabla
@@ -56,6 +57,14 @@ class FourCircleMainWindow(QtGui.QMainWindow):
         # about list all scans
         self.connect(self.ui.pushButton_survey, QtCore.SIGNAL('clicked()'),
                      self.do_survey)
+
+        # ROI operation  TODO FIXME ASAP
+        # self.ui.pushButton_cancelROI: Remove ROI
+        # self.ui.pushButton_integrateROI: integrate ROI
+        self.ui.pushButton_roiUp
+        self.ui.pushButton_roiDown
+        self.ui.pushButton_roiLeft
+        self.ui.pushButton_roiRight
 
         return
 
