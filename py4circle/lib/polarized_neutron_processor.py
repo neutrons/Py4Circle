@@ -1,4 +1,6 @@
 import os
+import sys
+sys.path.append('/Users/wzz/MantidBuild/debug-stable/bin/')
 
 import mantid
 import mantid.simpleapi as mantidsimple

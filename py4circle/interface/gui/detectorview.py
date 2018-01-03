@@ -91,11 +91,16 @@ class DetectorView(mplgraphicsview2d.MplGraphicsView2D):
                                        button=[1, 3],  # don't use middle button
                                        minspanx=5, minspany=5,
                                        spancoords='pixels',
-                                       interactive=True,
+                                       # interactive=True,
                                        lineprops=line_props)
 
         # determine ROI rectangular color
         self._rectColorIndex = 0
+        self._roiCollections = dict()
+
+        # record for the size of ROI as all ROI shall have same sizes
+        self._roiSizeX = None
+        self._roiSizeY = None
 
         return
 
@@ -106,6 +111,8 @@ class DetectorView(mplgraphicsview2d.MplGraphicsView2D):
         print 'Before Clear Canvas: ', self._myCanvas.axes
         super(DetectorView, self).clear_canvas()
         print 'After Clear Canvas: ', self._myCanvas.axes
+
+
 
     def toggle_selector(self, event):
         """
@@ -152,19 +159,32 @@ class DetectorView(mplgraphicsview2d.MplGraphicsView2D):
         # eclick and erelease are the press and release events
         x1, y1 = eclick.xdata, eclick.ydata
         x2, y2 = erelease.xdata, erelease.ydata
-        print '[DB...BAT...BAT] line_select_callback() is called at ({0}, {1})'.format(x2, y2)
-        print("(%3.2f, %3.2f) --> (%3.2f, %3.2f)" % (x1, y1, x2, y2))
-        print(" The button you used were: %s %s" % (eclick.button, erelease.button))
+        print('[DB...BAT...BAT] line_select_callback() is called at ({0}, {1})'.format(x2, y2))
+        print("\t(%3.2f, %3.2f) --> (%3.2f, %3.2f)" % (x1, y1, x2, y2))
+        print("\tThe button you used were: %s %s" % (eclick.button, erelease.button))
 
+        # determine size of ROI/rectangular
+        if self._roiSizeX is None or self._roiSizeY is None:
+            self._roiSizeX = np.abs(x1 - x2)
+            self._roiSizeY = np.abs(y1 - y2)
+
+        # determine color
         color_index = self._rectColorIndex % len(DetectorView.ROI_Colors)
         roi_color = DetectorView.ROI_Colors[color_index]
-        self._rectColorIndex += 1
-        new_rect = plt.Rectangle((min(x1, x2), min(y1, y2)), np.abs(x1 - x2), np.abs(y1 - y2),
+        new_rect = plt.Rectangle((min(x1, x2), min(y1, y2)), self._roiSizeX, self._roiSizeY, # np.abs(x1 - x2), np.abs(y1 - y2),
                                  fill=True, alpha=0.2,
-                                 color=roi_color, label='11111',
+                                 color=roi_color, label='ROI {0}'.format(color_index),
                                  linewidth=5)
         patch_return = self._myCanvas.axes.add_patch(new_rect)
-        print 'Why cannot I draw a rectangular??? return = {0}.  Rectangualr = {1}'.format(patch_return, new_rect)
+
+        # record rectangular
+        self._roiCollections[color_index] = new_rect
+       
+        # color index increment
+        self._rectColorIndex += 1
+
+
+        # print 'Why cannot I draw a rectangular??? return = {0}.  Rectangualr = {1}'.format(patch_return, new_rect)
 
         self._lastRect = new_rect
 
@@ -180,6 +200,33 @@ class DetectorView(mplgraphicsview2d.MplGraphicsView2D):
         self.toggle_selector(event)
 
         return
+
+    def remove_roi(self, roi_index=None):
+        """ remove specified ROI.  If not specified, then all ROI will be removed from canvas
+        """
+        # get roi indexes
+        if roi_index is None:
+            roi_index_list = self._roiCollections.keys()
+        else:
+            assert isinstance(roi_index, int), 'ROI index {0} shall be an integer but not a {1}.'.format(roi_index, type(roi_index))
+            if roi_index not in self._roiCollections:
+                raise RuntimeError('ROI with index {0} does not exist.'.format(roi_index))
+            roi_index_list = [roi_index]
+        # END-IF-ELSE
+
+        # romove rectagular
+        for roi_index in roi_index_list:
+            self.remove_rectangular(self._roiCollections[roi_index])
+            del self._roiCollections[roi_index]
+
+        # reset roi index
+        if roi_index is None:
+            # reset ROI size
+            self._roiSizeX = None
+            self._roiSizeY = None
+
+        return
+
 
 # if __name__ == '__main__':
 #         import matplotlib.pyplot as plt
