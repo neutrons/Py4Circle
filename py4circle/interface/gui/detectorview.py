@@ -7,61 +7,61 @@ from matplotlib.widgets import RectangleSelector
 import matplotlib.pyplot as plt
 
 
-# TODO FIXME Delete it?
-class SelectFromCollection(object):
-    """Select indices from a matplotlib collection using `LassoSelector`.
-
-    Selected indices are saved in the `ind` attribute. This tool highlights
-    selected points by fading them out (i.e., reducing their alpha values).
-    If your collection has alpha < 1, this tool will permanently alter them.
-
-    Note that this tool selects collection objects based on their *origins*
-    (i.e., `offsets`).
-
-    Parameters
-    ----------
-    ax : :class:`~matplotlib.axes.Axes`
-        Axes to interact with.
-
-    collection : :class:`matplotlib.collections.Collection` subclass
-        Collection you want to select from.
-
-    alpha_other : 0 <= float <= 1
-        To highlight a selection, this tool sets all selected points to an
-        alpha value of 1 and non-selected points to `alpha_other`.
-    """
-
-    def __init__(self, ax, collection, alpha_other=0.3):
-        self.canvas = ax.figure.canvas
-        self.collection = collection
-        self.alpha_other = alpha_other
-
-        self.xys = collection.get_offsets()
-        self.Npts = len(self.xys)
-
-        # Ensure that we have separate colors for each object
-        self.fc = collection.get_facecolors()
-        if len(self.fc) == 0:
-            raise ValueError('Collection must have a facecolor')
-        elif len(self.fc) == 1:
-            self.fc = np.tile(self.fc, self.Npts).reshape(self.Npts, -1)
-
-        self.lasso = LassoSelector(ax, onselect=self.onselect)
-        self.ind = []
-
-    def onselect(self, verts):
-        path = Path(verts)
-        self.ind = np.nonzero([path.contains_point(xy) for xy in self.xys])[0]
-        self.fc[:, -1] = self.alpha_other
-        self.fc[self.ind, -1] = 1
-        self.collection.set_facecolors(self.fc)
-        self.canvas.draw_idle()
-
-    def disconnect(self):
-        self.lasso.disconnect_events()
-        self.fc[:, -1] = 1
-        self.collection.set_facecolors(self.fc)
-        self.canvas.draw_idle()
+# # TODO FIXME Removed and Will Be Stored
+# class SelectFromCollection(object):
+#     """Select indices from a matplotlib collection using `LassoSelector`.
+#
+#     Selected indices are saved in the `ind` attribute. This tool highlights
+#     selected points by fading them out (i.e., reducing their alpha values).
+#     If your collection has alpha < 1, this tool will permanently alter them.
+#
+#     Note that this tool selects collection objects based on their *origins*
+#     (i.e., `offsets`).
+#
+#     Parameters
+#     ----------
+#     ax : :class:`~matplotlib.axes.Axes`
+#         Axes to interact with.
+#
+#     collection : :class:`matplotlib.collections.Collection` subclass
+#         Collection you want to select from.
+#
+#     alpha_other : 0 <= float <= 1
+#         To highlight a selection, this tool sets all selected points to an
+#         alpha value of 1 and non-selected points to `alpha_other`.
+#     """
+#
+#     def __init__(self, ax, collection, alpha_other=0.3):
+#         self.canvas = ax.figure.canvas
+#         self.collection = collection
+#         self.alpha_other = alpha_other
+#
+#         self.xys = collection.get_offsets()
+#         self.Npts = len(self.xys)
+#
+#         # Ensure that we have separate colors for each object
+#         self.fc = collection.get_facecolors()
+#         if len(self.fc) == 0:
+#             raise ValueError('Collection must have a facecolor')
+#         elif len(self.fc) == 1:
+#             self.fc = np.tile(self.fc, self.Npts).reshape(self.Npts, -1)
+#
+#         self.lasso = LassoSelector(ax, onselect=self.onselect)
+#         self.ind = []
+#
+#     def onselect(self, verts):
+#         path = Path(verts)
+#         self.ind = np.nonzero([path.contains_point(xy) for xy in self.xys])[0]
+#         self.fc[:, -1] = self.alpha_other
+#         self.fc[self.ind, -1] = 1
+#         self.collection.set_facecolors(self.fc)
+#         self.canvas.draw_idle()
+#
+#     def disconnect(self):
+#         self.lasso.disconnect_events()
+#         self.fc[:, -1] = 1
+#         self.collection.set_facecolors(self.fc)
+#         self.canvas.draw_idle()
 
 
 class DetectorView(mplgraphicsview2d.MplGraphicsView2D):
@@ -95,6 +95,9 @@ class DetectorView(mplgraphicsview2d.MplGraphicsView2D):
                                        # interactive=True,
                                        lineprops=line_props)
 
+        # record for last painted rectangular
+        self._lastRect = None
+
         # determine ROI rectangular color
         self._rectColorIndex = 0
         self._roiCollections = dict()
@@ -106,14 +109,20 @@ class DetectorView(mplgraphicsview2d.MplGraphicsView2D):
         return
 
     def clear_canvas(self):
+        """ clear canvas
+        :return:
         """
-        blabla
-        """
-        print 'Before Clear Canvas: ', self._myCanvas.axes
+        print '[DB...BAT] Before Clear Canvas: ', self._myCanvas.axes
         super(DetectorView, self).clear_canvas()
-        print 'After Clear Canvas: ', self._myCanvas.axes
+        print '[DB...BAT] After Clear Canvas: ', self._myCanvas.axes
 
+        return
 
+    def get_roi_dimensions(self):
+        """
+        get all the ROI/rectangular's dimensions (x0, y0), (x1, y1)
+        :return:
+        """
 
     def toggle_selector(self, event):
         """
@@ -129,26 +138,7 @@ class DetectorView(mplgraphicsview2d.MplGraphicsView2D):
             print(' RectangleSelector activated.')
             self._myRS.set_active(True)
 
-    def move_rectangular_right(self):
-        """
-        move the rectangular to right
-        @return:
-        """
-        w = self._lastRect.get_width()
-        x = self._lastRect.get_x()
-        self._lastRect.set_x(x + w * 0.1)
-        #  plt.show()
-
-    def move_rectangular(self, event):
-        """
-        move the rectangular from with key pressed
-        @param event:
-        @return:
-        """
-        print event.key
-        if event.key in ['R', 'r']:
-            print('move to the right')
-            self.move_rectangular_right()
+        return
 
     def line_select_callback(self, eclick, erelease):
         """
@@ -176,8 +166,8 @@ class DetectorView(mplgraphicsview2d.MplGraphicsView2D):
                                  fill=True, alpha=0.2,
                                  color=roi_color, label='ROI {0}'.format(color_index),
                                  linewidth=5)
-        patch_return = self._myCanvas.axes.add_patch(new_rect)
-        print ('[DB...CURIOSITY: Patch type: {0}'.format(type(patch_return)))
+        patch_return = self._myCanvas.axes.add_patch(new_rect)  # return type: matplotlib.patches.Rectangle
+        self.canvas()._flush()
 
         # record rectangular
         self._roiCollections[color_index] = new_rect
@@ -189,6 +179,62 @@ class DetectorView(mplgraphicsview2d.MplGraphicsView2D):
         self._lastRect = new_rect
 
         return self._lastRect
+
+    def move_roi(self, roi_index, dx=0, dy=0):
+        """
+        move region of interest (rectangular) from canvas
+        :param roi_index:
+        :param dx:
+        :param dy:
+        :return:
+        """
+        # check input
+        assert isinstance(roi_index, int), 'Region of interest\'s index {0} must be an integer but not a {1}' \
+                                           ''.format(roi_index, type(roi_index))
+        if roi_index not in self._roiCollections:
+            raise RuntimeError('ROI index {0} does not exist in collection dictionary with keys {1}'
+                               ''.format(roi_index, self._roiCollections.keys()))
+
+        # get rectangular
+        roi_rect = self._roiCollections[roi_index]
+
+        # move along X
+        if dx != 0:
+            x = roi_rect.get_x()
+            roi_rect.set_x(x+dx)
+
+        # move along Y
+        if dy != 0:
+            y = roi_rect.get_y()
+            roi_rect.set_y(y+dy)
+
+        # flush
+        self.canvas()._flush()
+
+        return
+
+    def move_rectangular_right(self):
+        """
+        move the rectangular to right
+        @return:
+        """
+        w = self._lastRect.get_width()
+        x = self._lastRect.get_x()
+        self._lastRect.set_x(x + w * 0.1)
+        #  plt.show()
+
+    def move_rectangular(self, event):
+        """
+        move the rectangular from with key pressed
+        @param event:
+        @return:
+        """
+        print event.key
+        if event.key in ['R', 'r']:
+            print('move to the right')
+            self.move_rectangular_right()
+
+        return
 
     def on_mouse_press_event(self, event):
         """
@@ -224,6 +270,9 @@ class DetectorView(mplgraphicsview2d.MplGraphicsView2D):
             # reset ROI size
             self._roiSizeX = None
             self._roiSizeY = None
+
+        # flush
+        self.canvas()._flush()
 
         return
 

@@ -58,13 +58,30 @@ class FourCircleMainWindow(QtGui.QMainWindow):
         self.connect(self.ui.pushButton_survey, QtCore.SIGNAL('clicked()'),
                      self.do_survey)
 
-        # ROI operation  TODO FIXME ASAP
-        # self.ui.pushButton_cancelROI: Remove ROI
-        # self.ui.pushButton_integrateROI: integrate ROI
-        self.ui.pushButton_roiUp
-        self.ui.pushButton_roiDown
-        self.ui.pushButton_roiLeft
-        self.ui.pushButton_roiRight
+        # ROI operation
+        self.connect(self.ui.pushButton_cancelROI, QtCore.SIGNAL('clicked()'),
+                     self.do_remove_roi)
+        self.connect(self.ui.pushButton_integrateROI, QtCore.SIGNAL('clicked()'),
+                     self.do_integrate_rois)
+
+        #: integrate ROI
+        self.connect(self.ui.pushButton_roiUp, QtCore.SIGNAL('clicked()'),
+                     self.do_move_roi_up)
+        self.connect(self.ui.pushButton_roiDown, QtCore.SIGNAL('clicked()'),
+                     self.do_move_roi_down)
+        self.connect(self.ui.pushButton_roiLeft, QtCore.SIGNAL('clicked()'),
+                     self.do_move_roi_left)
+        self.connect(self.ui.pushButton_roiRight, QtCore.SIGNAL('clicked()'),
+                     self.do_move_roi_right)
+
+        # list of ROI radio buttons
+        self._roiSelectorDict = {-1: self.ui.radioButton_roiAll,
+                                 0: self.ui.radioButton_roiNo1,
+                                 1: self.ui.radioButton_roiNo2,
+                                 2: self.ui.radioButton_roiNo3,
+                                 3: self.ui.radioButton_roiNo4,
+                                 4: self.ui.radioButton_roiNo5,
+                                 5: self.ui.radioButton_roiNo6}
 
         return
 
@@ -86,6 +103,28 @@ class FourCircleMainWindow(QtGui.QMainWindow):
         # FIXME - Remove this part after testing
 
         return
+
+    def _get_selected_rois(self):
+        """
+        check radio buttons for selected ROI or all ROI
+        :return:
+        """
+        # find the selected
+        selected = None
+        for roi_index in self._roiSelectorDict.keys():
+            if self._roiSelectorDict[roi_index].isChecked():
+                selected = roi_index
+        # END-FOR
+
+        if selected is None:
+            raise RuntimeError('It is not possible to have no ROI selected')
+
+        if selected == -1:
+            roi_list = range(6)
+        else:
+            roi_list = [selected]
+
+        return roi_list
 
     def do_apply_setup(self):
         """
@@ -141,22 +180,6 @@ class FourCircleMainWindow(QtGui.QMainWindow):
             self.ui.lineEdit_workDir.setStyleSheet("color: green;")
         # END-IF-ELSE
 
-        # preprocess directory
-        # if len(pre_process_dir) == 0:
-        #     # user does not specify
-        #     self._myControl.pre_processed_dir = None
-        # elif os.path.exists(pre_process_dir):
-        #     # user specifies a valid directory
-        #     self._myControl.pre_processed_dir = pre_process_dir
-        #     self.ui.lineEdit_preprocessedDir.setStyleSheet('color: green;')
-        # else:
-        #     # user specifies a non-exist directory. make an error message
-        #     self.pop_one_button_dialog('Pre-processed directory {0} ({1}) does not exist.'
-        #                                ''.format(pre_process_dir, type(pre_process_dir)))
-        #     self._myControl.pre_processed_dir = None
-        #     self.ui.lineEdit_preprocessedDir.setStyleSheet('color: red;')
-        # # END-IF
-
         if len(error_message) > 0:
             self.pop_one_button_dialog(error_message)
 
@@ -189,6 +212,72 @@ class FourCircleMainWindow(QtGui.QMainWindow):
             self.pop_one_button_dialog(error_message)
         else:
             self.ui.lineEdit_workDir.setText(work_dir)
+
+        return
+
+    def do_integrate_rois(self):
+        """
+        Integrate ROIs for user
+        :return:
+        """
+        # get all the ROI's region
+        roi_dimension_dict = self.ui.graphicsView_detector2dPlot.get_roi_dimensions()
+
+        # convert the ROI/rectangular dimension to pixels
+
+        # TODO ASAP ...
+
+        return
+
+    def do_move_roi_down(self):
+        """
+        move selected ROIs down
+        :return:
+        """
+        # get selected ROIs by radio button
+        roi_index_list = self._get_selected_rois()
+
+        for roi_index in roi_index_list:
+            self.ui.graphicsView_detector2dPlot.move_roi(roi_index=roi_index, dy=-1)
+
+        return
+
+    def do_move_roi_left(self):
+        """
+        move selected ROIs to left
+        :return:
+        """
+        # get selected ROIs by radio button
+        roi_index_list = self._get_selected_rois()
+
+        for roi_index in roi_index_list:
+            self.ui.graphicsView_detector2dPlot.move_roi(roi_index=roi_index, dx=-1)
+
+        return
+
+    def do_move_roi_right(self):
+        """
+        move selected ROIs to right
+        :return:
+        """
+        # get selected ROIs by radio button
+        roi_index_list = self._get_selected_rois()
+
+        for roi_index in roi_index_list:
+            self.ui.graphicsView_detector2dPlot.move_roi(roi_index=roi_index, dx=1)
+
+        return
+
+    def do_move_roi_up(self):
+        """
+        move selected ROIs up
+        :return:
+        """
+        # get selected ROIs by radio button
+        roi_index_list = self._get_selected_rois()
+
+        for roi_index in roi_index_list:
+            self.ui.graphicsView_detector2dPlot.move_roi(roi_index=roi_index, dy=1)
 
         return
 
@@ -225,7 +314,6 @@ class FourCircleMainWindow(QtGui.QMainWindow):
         self._plot_raw_xml_2d(exp_no, scan_no, pt_no)
 
         return
-
 
     def do_plot_prev_pt_raw(self):
         """ Plot the Pt.
@@ -272,6 +360,18 @@ class FourCircleMainWindow(QtGui.QMainWindow):
 
         # Call to plot 2D
         self._plot_raw_xml_2d(exp_no, scan_no, pt_no)
+
+        return
+
+    def do_remove_roi(self):
+        """
+        remove a selected ROI (rectangular)
+        :return:
+        """
+        roi_index_list = self._get_selected_rois()
+
+        for roi_index in roi_index_list:
+            self.ui.graphicsView_detector2dPlot.remove_roi(roi_index=roi_index)
 
         return
 
