@@ -227,6 +227,8 @@ class FourCircleMainWindow(QtGui.QMainWindow):
 
         # TODO ASAP ...
 
+        # create a dialog/window for the result
+
         return
 
     def do_move_roi_down(self):
