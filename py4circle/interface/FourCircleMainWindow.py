@@ -3,6 +3,7 @@ import os
 import gui.MainWindow_ui as MainWindow_ui
 import guiutility as gutil
 import py4circle.lib.polarized_neutron_processor as polarized_neutron_processor
+from py4circle.interface.integrratedroiview import IntegratedROIView
 
 
 class FourCircleMainWindow(QtGui.QMainWindow):
@@ -82,6 +83,15 @@ class FourCircleMainWindow(QtGui.QMainWindow):
                                  3: self.ui.radioButton_roiNo4,
                                  4: self.ui.radioButton_roiNo5,
                                  5: self.ui.radioButton_roiNo6}
+
+        # define child windows
+        self._integratedViewWindow = None
+
+        # instrument information: FIXME - this number shall be flexible with input
+        self._pixelXYSize = 256
+
+        # other class variables
+        self._homeSrcDir = '/tmp'
 
         return
 
@@ -223,11 +233,24 @@ class FourCircleMainWindow(QtGui.QMainWindow):
         # get all the ROI's region
         roi_dimension_dict = self.ui.graphicsView_detector2dPlot.get_roi_dimensions()
 
-        # convert the ROI/rectangular dimension to pixels
+        # integrate
+        integrated_value_dict = dict()
 
-        # TODO ASAP ...
+        for roi_name in roi_dimension_dict:
+            # convert the ROI/rectangular dimension to pixels
+            left_bottom_x = roi_dimension_dict[roi_name][0]
+            left_bottom_y = roi_dimension_dict[roi_name][1]
+            width = roi_dimension_dict[roi_name][2]
+            height = roi_dimension_dict[roi_name][3]
+            pixel_range_list = self.convert_roi_dim_to_pixels((left_bottom_x, left_bottom_y), width=width,
+                                                              height=height)
+            integrated_value_dict[roi_name] = self._myControl.integrate_roi(int(self.ui.lineEdit_exp.text()),
+                                                                            int(self.ui.lineEdit_run.text()),
+                                                                            pixel_range_list)
 
         # create a dialog/window for the result
+        self._integratedViewWindow = IntegratedROIView(self)
+        self._integratedViewWindow.show()
 
         return
 
@@ -495,6 +518,41 @@ class FourCircleMainWindow(QtGui.QMainWindow):
         self.ui.lineEdit_rawDataPtNo.setText(str(pt_num))
 
         return
+
+    def convert_roi_dim_to_pixels(self, bottom_left_coord, width, height):
+        """
+        convert a rectangular ROI with dimension to
+        :param bottom_left_coord: 
+        :param width: 
+        :param height: 
+        :return: a list of 2-tuples.  each tuple contains a range of pixels (start ID and end ID)
+        """
+        # check inputs
+        assert isinstance(bottom_left_coord, tuple) and len(bottom_left_coord) == 2, \
+            'bottom left coordinate {0} must be a 2-tuple but not a {1}' \
+            ''.format(bottom_left_coord, type(bottom_left_coord))
+        assert isinstance(width, float) and width > 0,\
+            'Width {0} must be a positive float but not a {1}.'.format(width, type(width))
+        assert isinstance(height, float) and height > 0, \
+            'Height {0} must be a positive float but not a {1}.'.format(height, type(height))
+
+        # map from dimension to pixel IDs
+        print '[DB...BAT] Assuming that ROI coordinate is consistent with pixel arrangement.'
+
+        pixel_range_list = list()
+
+        # convert bottom left coordinate to integers
+        bottom_left_x, bottom_left_y = bottom_left_coord
+        bl_x_int = int(bottom_left_x)
+        bl_y_int = int(bottom_left_y)
+        height_int = int(height)
+        width_int = int(width)
+        for row_index in range(bl_y_int, bl_y_int + height_int):
+            start_pixel_id = 1 + row_index * self._pixelXYSize
+            pixel_range_list.append((start_pixel_id + bl_x_int, start_pixel_id + bl_x_int + width_int))
+        # END-FOR
+
+        return pixel_range_list
 
     def _plot_raw_xml_2d(self, exp_no, scan_no, pt_no):
         """ Plot raw workspace from XML file for a measurement/pt.

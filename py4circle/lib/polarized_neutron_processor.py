@@ -2,6 +2,7 @@ import os
 import sys
 sys.path.append('/Users/wzz/MantidBuild/debug-stable/bin/')
 
+import numpy
 import mantid
 import mantid.simpleapi as mantidsimple
 from mantid.api import AnalysisDataService
@@ -275,6 +276,32 @@ class FourCirclePolarizedNeutronProcessor(object):
         :return:
         """
         return self._expNumber
+
+    def integrate_roi(self, exp_number, scan_number, pixel_range_list):
+        """
+        Integrate counts in a given ROI
+        :param pixel_range_list:
+        :return:
+        """
+        # check inputs
+        assert isinstance(pixel_range_list, list), 'Input {0} must be a list of 2-tuples but not a {1}.' \
+                                                   ''.format(pixel_range_list, type(pixel_range_list))
+        assert isinstance(exp_number, int), 'Experiment number {0} must be an integer but not a {1}' \
+                                            ''.format(exp_number, type(exp_number))
+        assert isinstance(scan_number, int), 'Scan number {0} must be an integer but not a {1}' \
+                                             ''.format(scan_number, type(scan_number))
+
+        if exp_number != self._expNumber:
+            raise RuntimeError('Input experiment number {0} and stored experiment number {1} do '
+                               'not match.'.format(exp_number, self._expNumber))
+
+        #  vec_integrated = numpy.ndarray(shape)
+
+        print '[DB...BAT] Spice Table:   {0}'.format(self._mySpiceTableDict)
+        print '[DB...BAT] Raw Workspace: {0}'.format(self._myRawDataWSDict)
+
+
+        raise NotImplementedError('ASAP to finish!')
     
     def load_spice_scan_file(self, exp_no, scan_no, spice_file_name=None):
         """

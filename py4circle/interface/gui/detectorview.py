@@ -64,12 +64,27 @@ class DetectorView(mplgraphicsview2d.MplGraphicsView2D):
     def get_roi_dimensions(self):
         """
         get all the ROI/rectangular's dimensions (x0, y0), (x1, y1)
-        :return:
+        :return: a dictionary with rectangular dimensions: left-bottom x, left-bottom y, width, height
         """
-        # TODO ASPA - Implement!
+        dim_dict = {}
+        for roi_name in self._roiCollections.keys():
+            roi_rect = self._roiCollections[roi_name]
+            assert isinstance(roi_rect, plt.Rectangle),\
+                'Rectangular/ROI of {0} must be a a plt.Rectangle instance but not a {1}' \
+                ''.format(roi_name, type(roi_rect))
+            lb_x, lb_y = roi_rect.get_xy()
+            width = roi_rect.get_width()
+            height = roi_rect.get_height()
 
+            dim_dict[roi_name] = (lb_x, lb_y, width, height)  #
 
-        return dict()
+            # debug output
+            print '[DB...BAT] ROI {0}. Bottom-left ({1}, {2}). Width = {3}; Height = {4}' \
+                  ''.format(roi_name, lb_x, lb_y, width, height)
+
+        # END-FOR
+
+        return dim_dict
 
     def toggle_selector(self, event):
         """
@@ -121,7 +136,7 @@ class DetectorView(mplgraphicsview2d.MplGraphicsView2D):
        
         # color index increment
         self._rectColorIndex += 1
-        # print 'Why cannot I draw a rectangular??? return = {0}.  Rectangualr = {1}'.format(patch_return, new_rect)
+        # print 'Why cannot I draw a rectangular??? return = {0}.  Rectangular = {1}'.format(patch_return, new_rect)
 
         self._lastRect = new_rect
 
