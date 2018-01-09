@@ -1,19 +1,14 @@
 ########################################################################
 #
-# General-purposed data analysis widget including IPython console
-# and plotting viewer
+# General-purposed plotting window
 #
 ########################################################################
-from mantidipythonwidget import MantidIPythonWidget
+from ipythonanalysiswidget import IPyAnalysisWidget
 
 from PyQt4 import QtCore, QtGui
+from MyTableWidget import  NTableWidget
+from mplgraphicsview1d import MplGraphicsView1D
 
-from mplgraphicsview import MplGraphicsView
-import ndav_widgets.NTableWidget as baseTable
-import ndav_widgets.CustomizedTreeView as baseTree
-
-from mantid.api import AnalysisDataService
-import mantid.simpleapi
 
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
@@ -22,11 +17,11 @@ except AttributeError:
         return s
 
 
-class DataAnalysisWidget(QtGui.QWidget):
+class WorkspaceViewWidget(QtGui.QWidget):
     """ Class for general-purposed plot window
     """
     # reserved command
-    Reserved_Command_List = ['plot', 'refresh', 'help', 'what']
+    Reserved_Command_List = ['plot', 'refresh', 'exit']
 
     def __init__(self, parent=None):
         """ Init
@@ -277,132 +272,35 @@ class DataAnalysisWidget(QtGui.QWidget):
         return
 
 
-class PlotControlTreeWidget(baseTree.CustomizedTreeView):
+class GeneralTableView(NTableWidget):
+    """
+    Extended table widget for general purpose
     """
 
-    """
-    def __init__(self, parent):
-        """
-        Initialization
-        :param parent:
-        """
-        self._myParent = parent
-        baseTree.CustomizedTreeView.__init__(self, None)
-
-        return
-
-
-class WorkspaceGraphicView(MplGraphicsView):
-    """
-
-    """
-    def __init__(self, parent):
-        """
-
-        :param parent:
-        """
-        MplGraphicsView.__init__(self, None)
-
-        # class variable
-        self._rangeX = (0, 1.)
-        self._rangeY = (0, 1.)
-
-        return
-
-    def plot_workspace(self, workspace_name):
-        """
-
-        :param workspace_name:
-        :return:
-        """
-        # FIXME - This is a dirty shortcut because it is not suppose to access AnalysisDataService at this level
-        ws = AnalysisDataService.retrieve(workspace_name)
-        mantid.simpleapi.ConvertToPointData(InputWorkspace=ws, OutputWorkspace='temp_ws')
-        point_ws = AnalysisDataService.retrieve('temp_ws')
-
-        # get X and Y
-        vec_x = point_ws.readX(0)
-        vec_y = point_ws.readY(0)
-
-        # get X and Y's range
-        min_x = min(self._rangeX[0], vec_x[0])
-        max_x = max(self._rangeX[1], vec_x[-1])
-
-        min_y = min(self._rangeY[0], min(vec_y))
-        max_y = max(self._rangeY[1], max(vec_y))
-
-        self._rangeX = (min_x, max_x)
-        self._rangeY = (min_y, max_y)
-
-        # plot
-        self.add_plot_1d(vec_x, vec_y)
-
-        return
-
-    def resize_canvas(self, y_min, y_max_ratio):
-        """
-
-        :param y_min:
-        :param y_max_ratio:
-        :return:
-        """
-        y_max = self._rangeY[1] * y_max_ratio
-
-        self.setXYLimit(self._rangeX[0], self._rangeX[1], y_min, y_max)
-
-        return
-
-    def reset_canvas(self):
-        """
-        reset the canvas by removing all lines and registered values
-        :return:
-        """
-        self.clear_all_lines()
-
-        self._rangeX = (0., 1.)
-        self._rangeY = (0., 1.)
-
-        self.setXYLimit(0., 1., 0., 1.)
-
-        return
-
-    @staticmethod
-    def setInteractive(status):
-        """
-        It is a native method of QtCanvas.  It is not used in MplGraphicView at all.
-        But the auto-generated python file from .ui file have this method added anyhow.
-        :param status:
-        :return:
-        """
-        return
-
-
-class WorkspaceTableWidget(baseTable.NTableWidget):
-    """
-    Table Widget for workspaces
-    """
     SetupList = [('Workspace', 'str'),
+                 ('Type', 'str'),
                  ('', 'checkbox')]
 
     def __init__(self, parent):
         """
-        Initialization
+        initialization
         :param parent:
         """
-        baseTable.NTableWidget.__init__(self, None)
+        super(GeneralTableView, self).__init__(parent)
 
-    def setup(self):
-        self.init_setup(self.SetupList)
-        self.setColumnWidth(0, 360)
         return
 
-    def add_workspace(self, ws_name):
+    def add_workspace(self, ws_name, ws_type):
         """
-
+        add an entry as a workspace
         :param ws_name:
+        :param ws_type:
         :return:
         """
-        self.append_row([ws_name, False])
+        assert isinstance(ws_name, str), 'Workspace name must be a string'
+        assert isinstance(ws_type, str), 'Workspace type {0} must be a string but not a {1}' \
+                                         ''.format(ws_type, type(ws_type))
+        self.append_row([ws_name, ws_type, False])
 
         return
 
@@ -413,8 +311,6 @@ class WorkspaceTableWidget(baseTable.NTableWidget):
         """
         selected_rows = self.get_selected_rows(True)
 
-        print '[DB...BAT] selected rows: ', selected_rows
-
         ws_name_list = list()
         for i_row in selected_rows:
             ws_name = self.get_cell_value(i_row, 0)
@@ -422,5 +318,29 @@ class WorkspaceTableWidget(baseTable.NTableWidget):
 
         return ws_name_list
 
+    def setup(self):
+        """
+        set up the workspace
+        :return:
+        """
+        self.init_setup(self.SetupList)
+
+        # column width
+        self.setColumnWidth(0, 360)
+        self.setColumnWidth(1, 120)
+
+        return
 
 
+class GeneralPurposeDataView(MplGraphicsView1D):
+    """
+    Extended table widget for general purpose
+    """
+    def __init__(self, parent):
+        """
+        initialization
+        :param parent:
+        """
+        super(GeneralPurposeDataView, self).__init__(parent)
+
+        return

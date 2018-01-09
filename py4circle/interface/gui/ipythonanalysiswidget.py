@@ -107,11 +107,82 @@ class IPyAnalysisWidget(RichIPythonWidget):
         self._mainApplication = None
 
         # self.start_mantid()
-
+        # TODO/FIXME - Find out why there is such a debug section
         vdict2 = dict()
         import numpy
         vdict2['r1'] = numpy.array([2, 2, 34])
         shell.push(vdict2)
+
+        return
+
+    @staticmethod
+    def _retrieve_non_python_command(script):
+        """
+        IPython widget might support some non-pyton command.  It might start with some prefix
+        such as 'Run:' if user presses 'up-arrow'.
+        Retrieve the correct command from the input string
+        :param script:
+        :return:
+        """
+        # convert previous command "Run: vbin, ipts=18420, runs=139148, tag='C', output='\tmp'" to a property command
+        if script.startswith('"Run: '):
+            # strip "Run: and " away
+            script = script.split('Run: ')[1]
+            if script[-1] == '"':
+                script = script[:-1]
+        elif script.startswith('Run: '):
+            # strip Run: away
+            script = script.split('Run: ')[1]
+
+        return script
+
+    def execute(self, source=None, hidden=False, interactive=False):
+        """ Override super's execute() in order to emit customized signals to main application
+        @param source:
+        @param hidden:
+        @param interactive:
+        @return:
+        """
+        # process input script/command
+        script = str(self.input_buffer).strip()
+
+        # # prototype
+        # if script.startswith('a') is False:
+        #     source = 'a = 5\naa = 20\nfor i in range(10):\n  print (i)\n\n'
+        #
+        # super(RichIPythonWidget, self).execute(source, hidden, interactive=True)
+        #
+        # # TODO/FIXME - Debug return
+        # return
+
+        script = self._retrieve_non_python_command(script)
+
+        # main application is workspace viewer
+        is_reserved = False
+        if self._mainApplication is not None and self._mainApplication.is_reserved_command(script):
+            is_reserved = True
+            exec_message = self._mainApplication.execute_reserved_command(script)
+            script_transformed = script[:]
+            script_transformed = script_transformed.replace('"', "'")
+            source = '\"Run: %s\"' % script_transformed
+        else:
+            exec_message = None
+
+        # call base class to execute
+        super(RichIPythonWidget, self).execute(source, hidden, interactive)
+
+        # then others
+        if is_reserved:
+            self._append_plain_text('\n%s\n' % exec_message)
+
+        # NOTE/TODO - This section can be enabled to link current session to parent workspace
+
+
+        if False and self._mainApplication is not None:
+            # post_workspace_names = set(mtd.getObjectNames())
+            # diff_set = post_workspace_names - prev_workspace_names
+            # self._mainApplication.process_workspace_change(list(diff_set))
+            pass
 
         return
 
@@ -137,58 +208,6 @@ class IPyAnalysisWidget(RichIPythonWidget):
         ofile = open(mantidplotrc, 'w')
         ofile.write(file_content)
         ofile.close()
-
-        return
-
-    def execute(self, source=None, hidden=False, interactive=False):
-        """ Override super's execute() in order to emit customized signals to main application
-        @param source:
-        @param hidden:
-        @param interactive:
-        @return:
-        """
-        # process input script/command
-        script = str(self.input_buffer).strip()
-
-        # # prototype
-        # if script.startswith('a') is False:
-        #     source = 'a = 5\naa = 20\nfor i in range(10):\n  print (i)\n\n'
-        #
-        # super(RichIPythonWidget, self).execute(source, hidden, interactive=True)
-        #
-        # # TODO/FIXME - Debug return
-        # return
-
-        # convert previous command "Run: vbin, ipts=18420, runs=139148, tag='C', output='\tmp'" to a property command
-        if script.startswith('"Run: '):
-            # strip "Run: and " away
-            script = script.split('Run: ')[1]
-            if script[-1] == '"':
-                script = script[:-1]
-        elif script.startswith('Run: '):
-            # strip Run: away
-            script = script.split('Run: ')[1]
-
-        # main application is workspace viewer
-        is_reserved = False
-        if self._mainApplication is not None and self._mainApplication.is_reserved_command(script):
-            is_reserved = True
-            exec_message = self._mainApplication.execute_reserved_command(script)
-            script_transformed = script[:]
-            script_transformed = script_transformed.replace('"', "'")
-            source = '\"Run: %s\"' % script_transformed
-        else:
-            exec_message = None
-
-        # call base class to execute
-        super(RichIPythonWidget, self).execute(source, hidden, interactive)
-
-        # NOTE/TODO - This section can be enabled to link current session to parent workspace
-        if False and self._mainApplication is not None:
-            # post_workspace_names = set(mtd.getObjectNames())
-            # diff_set = post_workspace_names - prev_workspace_names
-            # self._mainApplication.process_workspace_change(list(diff_set))
-            pass
 
         return
 
@@ -222,5 +241,4 @@ class IPyAnalysisWidget(RichIPythonWidget):
         self.input_buffer = command
 
         return
-
 

@@ -207,6 +207,20 @@ class FourCirclePolarizedNeutronProcessor(object):
 
         return True, pt_number_list
 
+    @staticmethod
+    def get_existing_workspaces():
+        """
+        get the list of workspaces that are in ADS current
+        :return:
+        """
+        ws_name_list = AnalysisDataService.getObjectNames()
+        for index, ws_name in enumerate(ws_name_list):
+            ws_i = AnalysisDataService.retrieve(ws_name)
+            ws_type = ws_i.id()
+            ws_name_list[index] = ws_name, ws_type
+
+        return ws_name_list
+
     def get_raw_data_workspace(self, exp_no, scan_no, pt_no):
         """ Get raw workspace
         """
@@ -277,6 +291,24 @@ class FourCirclePolarizedNeutronProcessor(object):
         """
         return self._expNumber
 
+    def integrate_counts(self, ws_name, pixel_range_list):
+        """
+        integrate counts of a workspace
+        :param ws_name:
+        :param pixel_range_list:
+        :return:  2-tuple: list of Pts and numpy array of integrated counts
+        """
+        matrix_workspace = AnalysisDataService.retrieve(ws_name)
+
+        # assume that pixel ID and workspace index has 1-on-1 mapping
+        # FIXME - Redo XML file loading in pure python later
+        integrated_count = 0
+        for det_id_start, det_id_stop in pixel_range_list:
+            for det_id in range(det_id_start, det_id_stop):
+                integrated_count += matrix_workspace.readY(det_id)[0]
+
+        return integrated_count
+
     def integrate_roi(self, exp_number, scan_number, pixel_range_list):
         """
         Integrate counts in a given ROI
@@ -295,14 +327,38 @@ class FourCirclePolarizedNeutronProcessor(object):
             raise RuntimeError('Input experiment number {0} and stored experiment number {1} do '
                                'not match.'.format(exp_number, self._expNumber))
 
-        #  vec_integrated = numpy.ndarray(shape)
+        # load all Pts. in this scan
+        status, pt_number_list = self.get_pt_numbers(exp_number, scan_number)
+        if not status:
+            err_msg = pt_number_list
+            raise RuntimeError('Unable to retrieve pt numbers from experiment {0} scan {1} due to {2}'
+                               ''.format(exp_number, scan_number, err_msg))
+        ws_pt_list = list()
+        for pt_number in pt_number_list:
+            status, ws_name = self.load_spice_xml_file(exp_no=exp_number, scan_no=scan_number, pt_no=pt_number,
+                                                       over_write_existing=False)
+            if not status:
+                print '[ERROR] unable to load exp {0} scan {1}'.format(exp_number, scan_number)
+
+            ws_pt_list.append((pt_number, ws_name))
+        # END-FOR
+
+        # integrate
 
         print '[DB...BAT] Spice Table:   {0}'.format(self._mySpiceTableDict)
         print '[DB...BAT] Raw Workspace: {0}'.format(self._myRawDataWSDict)
 
+        vec_integrated = numpy.ndarray(shape=(len(ws_pt_list),), dtype='float')
+        pt_number_list = list()
+        for ipt, tup in enumerate(ws_pt_list):
+            pt_number, ws_name = tup
+            integrated_signal = self.integrate_counts(ws_name, pixel_range_list)
+            vec_integrated[ipt] = integrated_signal
+        pt_number_list.append(pt_number)
+        # END-FOR
 
-        raise NotImplementedError('ASAP to finish!')
-    
+        return pt_number_list, vec_integrated
+
     def load_spice_scan_file(self, exp_no, scan_no, spice_file_name=None):
         """
         Load a SPICE scan file to table workspace and run information matrix workspace.
@@ -349,7 +405,7 @@ class FourCirclePolarizedNeutronProcessor(object):
 
         return True, out_ws_name
 
-    def load_spice_xml_file(self, exp_no, scan_no, pt_no, xml_file_name=None):
+    def load_spice_xml_file(self, exp_no, scan_no, pt_no, xml_file_name=None, over_write_existing=False):
         """
         Load SPICE's detector counts XML file from local data directory
         Requirements: the SPICE detector counts file does exist. The XML file's name is given either
@@ -359,12 +415,15 @@ class FourCirclePolarizedNeutronProcessor(object):
         :param scan_no:
         :param pt_no:
         :param xml_file_name:
-        :return:
+        :param over_write_existing: if workspace exists, load still
+        :return: (bool, str) as (loaded or not, workspace name)
         """
         # Get XML file name with full path
         if xml_file_name is None:
             # use default
-            assert isinstance(exp_no, int) and isinstance(scan_no, int) and isinstance(pt_no, int)
+            assert isinstance(exp_no, int) and isinstance(scan_no, int) and isinstance(pt_no, int),\
+                'Experiment number {0} ({3}), Scan number {1} ({4}) and Pt number {2} ({5}) all shall be integers' \
+                ''.format(exp_no, scan_no, pt_no, type(exp_no), type(scan_no), type(pt_no))
             xml_file_name = os.path.join(self._dataDir, get_det_xml_file_name(self._instrumentName,
                                                                               exp_no, scan_no, pt_no))
         # END-IF
@@ -381,20 +440,25 @@ class FourCirclePolarizedNeutronProcessor(object):
 
         # load SPICE Pt.  detector file
         pt_ws_name = get_raw_data_workspace_name(exp_no, scan_no, pt_no)
-        try:
-            mantidsimple.LoadSpiceXML2DDet(Filename=xml_file_name,
-                                           OutputWorkspace=pt_ws_name,
-                                           SpiceTableWorkspace=spice_table_name,
-                                           PtNumber=pt_no)
-            if self._refWorkspaceForMask is None or AnalysisDataService.doesExist(pt_ws_name) is False:
-                self._refWorkspaceForMask = pt_ws_name
-        except RuntimeError as run_err:
-            return False, str(run_err)
+        if AnalysisDataService.doesExist(pt_ws_name) and over_write_existing is False:
+            pass
+        else:
+            try:
+                mantidsimple.LoadSpiceXML2DDet(Filename=xml_file_name,
+                                               OutputWorkspace=pt_ws_name,
+                                               SpiceTableWorkspace=spice_table_name,
+                                               PtNumber=pt_no)
+                if self._refWorkspaceForMask is None or AnalysisDataService.doesExist(pt_ws_name) is False:
+                    self._refWorkspaceForMask = pt_ws_name
+            except RuntimeError as run_err:
+                return False, str(run_err)
+            # END-IF-ELSE
 
-        # Add data storage
-        assert AnalysisDataService.doesExist(pt_ws_name), 'Unable to locate workspace {0}.'.format(pt_ws_name)
-        raw_matrix_ws = AnalysisDataService.retrieve(pt_ws_name)
-        self._add_raw_workspace(exp_no, scan_no, pt_no, raw_matrix_ws)
+            # Add data storage
+            assert AnalysisDataService.doesExist(pt_ws_name), 'Unable to locate workspace {0}.'.format(pt_ws_name)
+            raw_matrix_ws = AnalysisDataService.retrieve(pt_ws_name)
+            self._add_raw_workspace(exp_no, scan_no, pt_no, raw_matrix_ws)
+        # END-IF
 
         return True, pt_ws_name
    

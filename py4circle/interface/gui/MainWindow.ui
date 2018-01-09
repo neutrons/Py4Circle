@@ -21,7 +21,7 @@
        <bool>true</bool>
       </property>
       <property name="currentIndex">
-       <number>2</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="tab">
        <attribute name="title">
@@ -1314,7 +1314,7 @@ p, li { white-space: pre-wrap; }
        </attribute>
        <layout class="QGridLayout" name="gridLayout_5">
         <item row="1" column="0">
-         <widget class="DataAnalysisWidget" name="widget_analysis" native="true"/>
+         <widget class="IPyAnalysisWidget" name="widget_analysis" native="true"/>
         </item>
         <item row="0" column="0">
          <layout class="QHBoxLayout" name="horizontalLayout_3">
@@ -1775,15 +1775,15 @@ p, li { white-space: pre-wrap; }
    <header>detectorview.h</header>
   </customwidget>
   <customwidget>
+   <class>IPyAnalysisWidget</class>
+   <extends>QWidget</extends>
+   <header>ipythonanalysiswidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
    <class>ScanListTable</class>
    <extends>QTableWidget</extends>
    <header>tablewidgets.h</header>
-  </customwidget>
-  <customwidget>
-   <class>DataAnalysisWidget</class>
-   <extends>QWidget</extends>
-   <header>dataanalysiswidget.h</header>
-   <container>1</container>
   </customwidget>
   <customwidget>
    <class>GeneralTableView</class>

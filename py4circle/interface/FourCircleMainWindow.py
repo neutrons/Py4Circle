@@ -16,6 +16,8 @@ class FourCircleMainWindow(QtGui.QMainWindow):
                'Peak Integration': 6,
                'Scans Processing': 5}
 
+    Reserved_Command_List = ['integrate', 'plot', 'refresh']
+
     def __init__(self):
         """
 
@@ -96,15 +98,19 @@ class FourCircleMainWindow(QtGui.QMainWindow):
         return
 
     def _init_widgets(self):
-        """
+        """ Initialize widgets
+        :return:
         """
         self.ui.tableWidget_surveyTable.setup()
+
+        self.ui.widget_analysis.set_main_application(self)
+        self.ui.tableView_generalTableView.setup()
 
         # debug setup ----
         self.ui.lineEdit_exp.setText('640')
         self.ui.lineEdit_workDir.setText('/tmp')
         self.ui.lineEdit_surveyStartPt.setText('10')
-        self.ui.lineEdit_surveyEndPt.setText('30')
+        self.ui.lineEdit_surveyEndPt.setText('300')
         self.ui.lineEdit_numSurveyOutput.setText('50')
 
         self.ui.label_14.setStyleSheet('color: red')
@@ -614,6 +620,37 @@ class FourCircleMainWindow(QtGui.QMainWindow):
         self.ui.plainTextEdit_rawDataInformation.setPlainText(info)
 
         return
+
+    def execute_reserved_command(self, script):
+        """
+
+        :param script:
+        :return:
+        """
+        print 'Reserved non-python command: {0}'.format(script)
+
+        if script == 'refresh':
+            # refresh existing workspsaces
+            ws_name_list = self._myControl.get_existing_workspaces()
+            self.ui.tableView_generalTableView.remove_all_rows()
+            for ws_name, ws_type in ws_name_list:
+                self.ui.tableView_generalTableView.add_workspace(ws_name, ws_type)
+            # END-FOR
+        else:
+            print ''
+        # END-IF
+
+        return
+
+    def is_reserved_command(self, script):
+        """
+
+        :param script:
+        :return:
+        """
+        command = script.strip().split(',')[0].strip()
+
+        return command in self.Reserved_Command_List
 
     def pop_one_button_dialog(self, message):
         """ Pop up a one-button dialog

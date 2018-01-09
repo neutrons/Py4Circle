@@ -11,7 +11,7 @@ class ResultView1D(mplgraphicsview1d.MplGraphicsView1D):
         :param parent:
         """
         # init
-        super(ResultView1D, self).__init__(self, parent)
+        super(ResultView1D, self).__init__(parent)
 
         # unit of X-axis
         self._titleX = None

@@ -63,7 +63,8 @@ class MplGraphicsView1D(QtGui.QWidget):
         :param col_size: number of figures per row, i.e., number of columns
         """
         # Initialize parent
-        super(MplGraphicsView1D, self).__init__(parent)
+        # super(MplGraphicsView1D, self).__init__(parent)
+        QtGui.QWidget.__init__(self, parent)
 
         # set up other variables
         # key = line ID, value = row, col, bool (is main axes???)
