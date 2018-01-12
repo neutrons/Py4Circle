@@ -124,6 +124,8 @@ class DetectorView(mplgraphicsview2d.MplGraphicsView2D):
         # determine color
         color_index = self._rectColorIndex % len(DetectorView.ROI_Colors)
         roi_color = DetectorView.ROI_Colors[color_index]
+
+        # TODO ASAP - Set rectangular on coordinates on integers
         new_rect = plt.Rectangle((min(x1, x2), min(y1, y2)), self._roiSizeX, self._roiSizeY, # np.abs(x1 - x2), np.abs(y1 - y2),
                                  fill=True, alpha=0.2,
                                  color=roi_color, label='ROI {0}'.format(color_index),

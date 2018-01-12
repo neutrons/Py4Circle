@@ -1,3 +1,4 @@
+import numpy as np
 from PyQt4 import QtCore, QtGui
 import os
 import gui.MainWindow_ui as MainWindow_ui
@@ -248,11 +249,37 @@ class FourCircleMainWindow(QtGui.QMainWindow):
             left_bottom_y = roi_dimension_dict[roi_name][1]
             width = roi_dimension_dict[roi_name][2]
             height = roi_dimension_dict[roi_name][3]
-            pixel_range_list = self.convert_roi_dim_to_pixels((left_bottom_x, left_bottom_y), width=width,
-                                                              height=height)
-            integrated_value_dict[roi_name] = self._myControl.integrate_roi(int(self.ui.lineEdit_exp.text()),
-                                                                            int(self.ui.lineEdit_run.text()),
-                                                                            pixel_range_list)
+
+            pixel_range = (left_bottom_x, left_bottom_y), (left_bottom_x + width, left_bottom_y + height)
+            print ('[DB...BAT] Pixel Range: {0}'.format(pixel_range))
+
+            # convert to numpy array range
+
+            min_row = (256 - 1) - int(left_bottom_y + height + 1)
+            min_col = int(left_bottom_x - 1)
+            max_row = min_row + int(height) + 2
+            max_col = int(min_col + width)
+            matrix_range = (min_row, min_col), (max_row, max_col)
+
+            counts_matrix, count_sum = self._myControl.mask_roi(int(self.ui.lineEdit_exp.text()),
+                                                                int(self.ui.lineEdit_run.text()),
+                                                                int(self.ui.lineEdit_rawDataPtNo.text()),
+                                                                matrix_range)
+
+            det_shape = counts_matrix.shape
+            self.ui.graphicsView_detector2dPlot.add_2d_plot(counts_matrix, x_min=0, x_max=det_shape[0], y_min=0,
+                                                            y_max=det_shape[1],
+                                                            hold_prev_image=False, plot_type='image')
+
+            self.ui.plainTextEdit_rawDataInformation.setPlainText('Pixel Range: {0}; Matirix Range: {1}; Counts = {2}'
+                                                                  ''.format(pixel_range, matrix_range, count_sum))
+
+
+            # pixel_range_list = self.convert_roi_dim_to_pixels((left_bottom_x, left_bottom_y), width=width,
+            #                                                   height=height)
+            # integrated_value_dict[roi_name] = self._myControl.integrate_roi(int(self.ui.lineEdit_exp.text()),
+            #                                                                 int(self.ui.lineEdit_run.text()),
+            #                                                                 pixel_range_list)
 
         # create a dialog/window for the result
         self._integratedViewWindow = IntegratedROIView(self)
@@ -262,7 +289,7 @@ class FourCircleMainWindow(QtGui.QMainWindow):
 
     def do_move_roi_down(self):
         """
-        move selected ROIs down
+        move selected ROIs down by some pixel number in integers
         :return:
         """
         # get selected ROIs by radio button
@@ -561,6 +588,30 @@ class FourCircleMainWindow(QtGui.QMainWindow):
         return pixel_range_list
 
     def _plot_raw_xml_2d(self, exp_no, scan_no, pt_no):
+        """ Plot raw workspace from XML file
+        @param exp_no:
+        @param scan_no:
+        @param pt_no:
+        @return:
+        """
+        # check whether this XML file has been loaded
+        # TODO blabla
+        raw_det_data = self._myControl.load_spice_xml_file2(exp_no, scan_no, pt_no)
+        det_shape = raw_det_data.shape
+
+        # max_index = np.argmax(raw_det_data)
+        # irow = max_index / det_shape[1]
+        # icol = max_index % det_shape[1]
+        # print ('[DB...BAT] Maximum number {0}/{4} is at {1} / {2}, {3}'
+        #        ''.format(raw_det_data[irow, icol], max_index, irow, icol, np.amax(raw_det_data)))
+
+        self.ui.graphicsView_detector2dPlot.add_2d_plot(raw_det_data, x_min=0, x_max=det_shape[0], y_min=0,
+                                                        y_max=det_shape[1],
+                                                        hold_prev_image=False, plot_type='image')
+
+        return
+
+    def _plot_raw_xml_2d_old(self, exp_no, scan_no, pt_no):
         """ Plot raw workspace from XML file for a measurement/pt.
         """
         # Check and load SPICE table file
@@ -627,7 +678,7 @@ class FourCircleMainWindow(QtGui.QMainWindow):
         :param script:
         :return:
         """
-        print 'Reserved non-python command: {0}'.format(script)
+        print ('Reserved non-python command: {0}'.format(script))
 
         if script == 'refresh':
             # refresh existing workspsaces

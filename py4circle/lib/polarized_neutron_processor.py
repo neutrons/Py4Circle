@@ -13,6 +13,7 @@ except ImportError as e:
 else:
     NO_SCROLL = False
 from fourcircle_utility import *
+import parse_spice_xml
 
 
 MAX_SCAN_NUMBER = 100000
@@ -291,6 +292,29 @@ class FourCirclePolarizedNeutronProcessor(object):
         """
         return self._expNumber
 
+    def mask_roi(self, exp_number, scan_number, pt_number, mask_range):
+        """
+
+        @param exp_number:
+        @param scan_number:
+        @param pt_number:
+        @param mask_range:
+        @return:
+        """
+        # load data
+        # TODO shall check data holder first ... but not
+        det_matrix = self.load_spice_xml_file2(exp_number, scan_number, pt_number)
+
+        min_row = int(mask_range[0][0])
+        min_col = int(mask_range[0][1])
+        max_row = int(mask_range[1][0])
+        max_col = int(mask_range[1][1])
+
+        sum_count = numpy.sum(det_matrix[min_row:max_row, min_col:max_col])
+        det_matrix[min_row:max_row, min_col:max_col] = 0
+
+        return det_matrix, sum_count
+
     def integrate_counts(self, ws_name, pixel_range_list):
         """
         integrate counts of a workspace
@@ -354,7 +378,7 @@ class FourCirclePolarizedNeutronProcessor(object):
             pt_number, ws_name = tup
             integrated_signal = self.integrate_counts(ws_name, pixel_range_list)
             vec_integrated[ipt] = integrated_signal
-        pt_number_list.append(pt_number)
+            pt_number_list.append(pt_number)
         # END-FOR
 
         return pt_number_list, vec_integrated
@@ -385,10 +409,6 @@ class FourCirclePolarizedNeutronProcessor(object):
                 spice_file_name = os.path.join(self._dataDir,
                                                get_spice_file_name(self._instrumentName, exp_no, scan_no))
 
-            # Download SPICE file if necessary
-            if os.path.exists(spice_file_name) is False:
-                self.download_spice_file(exp_no, scan_no, over_write=True)
-
             try:
                 spice_table_ws, info_matrix_ws = mantidsimple.LoadSpiceAscii(Filename=spice_file_name,
                                                                              OutputWorkspace=out_ws_name,
@@ -404,6 +424,33 @@ class FourCirclePolarizedNeutronProcessor(object):
         self._add_spice_workspace(exp_no, scan_no, spice_table_ws)
 
         return True, out_ws_name
+
+    def load_spice_xml_file2(self, exp_no, scan_no, pt_no, xml_file_name=None):
+        """
+
+        @param exp_no:
+        @param scan_no:
+        @param pt_no:
+        @param xml_file_name:
+        @return:
+        """
+        # TODO FIXME ASAP : need a matrix holder to manage the loaded data
+        # Get XML file name with full path
+        if xml_file_name is None:
+            # use default
+            assert isinstance(exp_no, int) and isinstance(scan_no, int) and isinstance(pt_no, int),\
+                'Experiment number {0} ({3}), Scan number {1} ({4}) and Pt number {2} ({5}) all shall be integers' \
+                ''.format(exp_no, scan_no, pt_no, type(exp_no), type(scan_no), type(pt_no))
+            xml_file_name = os.path.join(self._dataDir, get_det_xml_file_name(self._instrumentName,
+                                                                              exp_no, scan_no, pt_no))
+        # END-IF
+
+        # check whether file exists
+        assert os.path.exists(xml_file_name), 'TODO'
+
+        count_matrix = parse_spice_xml.get_counts_xml_file(xml_file_name)
+
+        return count_matrix
 
     def load_spice_xml_file(self, exp_no, scan_no, pt_no, xml_file_name=None, over_write_existing=False):
         """

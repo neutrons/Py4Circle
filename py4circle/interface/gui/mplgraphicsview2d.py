@@ -122,6 +122,7 @@ class MplGraphicsView2D(QtGui.QWidget):
         # obsoleted: self._myCanvas.addPlot2D(array2d, x_min, x_max, y_min, y_max, hold_prev_image, y_tick_label)
 
         if plot_type == 'image':
+            print ('array2d: shape = {0}, x_max = {1}'.format(array2d.shape, x_max))
             self._myCanvas.add_image_plot(array2d, x_min, x_max, y_min, y_max, yticklabels=y_tick_label)
         elif plot_type == 'image file':
             self._myCanvas.add_image_file()
@@ -603,10 +604,14 @@ class Qt4Mpl2DCanvas(FigureCanvas):
         assert isinstance(array2d, np.ndarray), 'blabla'
         assert len(array2d.shape) == 2, 'blabla'
 
-        # show image
-        self._imagePlot = self.axes.imshow(array2d, extent=[xmin, xmax, ymin, ymax], interpolation='none')
+        # show image: return is of class matplotlib.image.AxesImage
+        prev_image = self._imagePlot
 
-        print (self._imagePlot, type(self._imagePlot))
+        self._imagePlot = self.axes.imshow(array2d, extent=[xmin, xmax, ymin, ymax], interpolation='none')
+        print ('[DB...BAT] previous image: {0}.   current image: {1}.  Are they same? {2}'
+               ''.format(prev_image, self._imagePlot, prev_image == self._imagePlot))
+        # print (self._imagePlot, type(self._imagePlot))
+        del prev_image
 
         # set y ticks as an option:
         if yticklabels is not None:
@@ -615,7 +620,8 @@ class Qt4Mpl2DCanvas(FigureCanvas):
             self.axes.set_yticklabels(yticklabels)
 
         # explicitly set aspect ratio of the image
-        self.axes.set_aspect('auto')
+        # TODO ASAP Expose setup for aspect ratio
+        self.axes.set_aspect(1)
 
         # set up color bar
         # # Set color bar.  plt.colorbar() does not work!
