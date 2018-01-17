@@ -9,6 +9,8 @@ from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar2
 from matplotlib.figure import Figure
 import matplotlib.image
+import matplotlib.pyplot as plt
+
 
 MplLineStyles = ['-', '--', '-.', ':', 'None', ' ', '']
 MplLineMarkers = [
@@ -661,6 +663,32 @@ class Qt4Mpl2DCanvas(FigureCanvas):
         self._flush()
 
         return
+
+    def add_rectangular(self, min_x, min_y, size_x, size_y, color, label):
+        """
+        add a rectangular
+        :param min_x:
+        :param min_y:
+        :param size_x:
+        :param size_y:
+        :param color:
+        :param label:
+        :return:
+        """
+        # generate a rectangular
+        new_rect = plt.Rectangle((min_x, min_y), size_x, size_y,  # np.abs(x1 - x2), np.abs(y1 - y2),
+                                 fill=True, alpha=0.2,
+                                 color=color, label=label,
+                                 linewidth=5)
+        patch_return = self.axes.add_patch(new_rect)  # return type: matplotlib.patches.Rectangle
+
+        # apply to 2D
+        self._flush()
+
+        # check
+        assert new_rect == patch_return
+
+        return new_rect
 
     def add_scatter_plot(self, array2d):
         """

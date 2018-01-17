@@ -61,6 +61,20 @@ class DetectorView(mplgraphicsview2d.MplGraphicsView2D):
 
         return
 
+    def get_roi_colors(self):
+        """
+        get all the ROI colors
+        :return:
+        """
+        color_dict = dict()
+        for roi_name in self._roiCollections.keys():
+            roi_color = self._roiCollections[roi_name][1]
+            assert isinstance(roi_color, str), 'ROI color {0} must be a string but not a {1}' \
+                                               ''.format(roi_color, type(roi_color))
+            color_dict[roi_name] = roi_color
+
+        return color_dict
+
     def get_roi_dimensions(self):
         """
         get all the ROI/rectangular's dimensions (x0, y0), (x1, y1)
@@ -68,7 +82,7 @@ class DetectorView(mplgraphicsview2d.MplGraphicsView2D):
         """
         dim_dict = {}
         for roi_name in self._roiCollections.keys():
-            roi_rect = self._roiCollections[roi_name]
+            roi_rect = self._roiCollections[roi_name][0]
             assert isinstance(roi_rect, plt.Rectangle),\
                 'Rectangular/ROI of {0} must be a a plt.Rectangle instance but not a {1}' \
                 ''.format(roi_name, type(roi_rect))
@@ -78,9 +92,9 @@ class DetectorView(mplgraphicsview2d.MplGraphicsView2D):
 
             dim_dict[roi_name] = (lb_x, lb_y, width, height)  #
 
-            # debug output
-            print '[DB...BAT] ROI {0}. Bottom-left ({1}, {2}). Width = {3}; Height = {4}' \
-                  ''.format(roi_name, lb_x, lb_y, width, height)
+            # # debug output
+            # print '[DB...BAT] ROI {0}. Bottom-left ({1}, {2}). Width = {3}; Height = {4}' \
+            #       ''.format(roi_name, lb_x, lb_y, width, height)
 
         # END-FOR
 
@@ -118,23 +132,23 @@ class DetectorView(mplgraphicsview2d.MplGraphicsView2D):
 
         # determine size of ROI/rectangular
         if self._roiSizeX is None or self._roiSizeY is None:
-            self._roiSizeX = np.abs(x1 - x2)
-            self._roiSizeY = np.abs(y1 - y2)
+            self._roiSizeX = int(np.abs(x1 - x2))
+            self._roiSizeY = int(np.abs(y1 - y2))
 
         # determine color
         color_index = self._rectColorIndex % len(DetectorView.ROI_Colors)
         roi_color = DetectorView.ROI_Colors[color_index]
 
-        # TODO ASAP - Set rectangular on coordinates on integers
-        new_rect = plt.Rectangle((min(x1, x2), min(y1, y2)), self._roiSizeX, self._roiSizeY, # np.abs(x1 - x2), np.abs(y1 - y2),
-                                 fill=True, alpha=0.2,
-                                 color=roi_color, label='ROI {0}'.format(color_index),
-                                 linewidth=5)
-        patch_return = self._myCanvas.axes.add_patch(new_rect)  # return type: matplotlib.patches.Rectangle
-        self.canvas()._flush()
+        # Set rectangular on coordinates on integers
+        min_x = int(min(x1, x2))
+        min_y = int(min(y1, y2))
+
+        # add
+        new_rect = self.canvas().add_rectangular(min_x, min_y, size_x=self._roiSizeX, size_y=self._roiSizeY,
+                                                 color=roi_color, label='ROI {0}'.format(color_index))
 
         # record rectangular
-        self._roiCollections[color_index] = new_rect
+        self._roiCollections[color_index] = new_rect, roi_color
        
         # color index increment
         self._rectColorIndex += 1
@@ -160,7 +174,7 @@ class DetectorView(mplgraphicsview2d.MplGraphicsView2D):
                                ''.format(roi_index, self._roiCollections.keys()))
 
         # get rectangular
-        roi_rect = self._roiCollections[roi_index]
+        roi_rect = self._roiCollections[roi_index][0]
 
         # move along X
         if dx != 0:

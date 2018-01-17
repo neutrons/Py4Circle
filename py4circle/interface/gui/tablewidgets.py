@@ -8,6 +8,100 @@ import sys
 
 import py4circle.interface.gui.MyTableWidget as tableBase
 
+
+class IntegratedCountsTable(tableBase.NTableWidget):
+    """ Extended table widget for integrated counts in ROI
+    """
+    def __init__(self, parent):
+        """
+
+        :param parent:
+        """
+        tableBase.NTableWidget.__init__(self, parent)
+
+        # set up list
+        self._tableSetupList = list()
+        self._ptNumberDict = dict()
+
+        return
+
+    def append_integrated_pt_row(self, pt_number):
+        """
+        append a new row
+        :param pt_number:
+        :return:
+        """
+        # check inputs
+        assert isinstance(pt_number, int), 'Pt number {0} shall be an integer but not a {1}' \
+                                           ''.format(pt_number, type(pt_number))
+
+        # construct
+        row_value_list = [None] * len(self._tableSetupList)
+        row_value_list[0] = pt_number
+
+        self.append_row(row_value_list)
+
+        # add to management
+        self._ptNumberDict[pt_number] = self.rowCount() - 1
+
+        return
+
+    def set_integrated_value(self, pt_number, roi_name, value):
+        """
+        set an integrated value to a pt by its ROI name
+        :param pt_number:
+        :param roi_name:
+        :param value:
+        :return:
+        """
+        # check input
+        assert isinstance(pt_number, int), 'Pt number {0} shall be an integer but not a {1}' \
+                                           ''.format(pt_number, type(pt_number))
+        # convert ROI name to be string
+        roi_name = str(roi_name)
+
+        # get row number
+        if pt_number in self._ptNumberDict:
+            row_number = self._ptNumberDict[pt_number]
+        else:
+            raise RuntimeError('Pt {0} is not in the table.'.format(pt_number))
+
+        # get column number
+        try:
+            col_number = self._tableSetupList.index((roi_name, 'float'))
+        except ValueError as index_err:
+            raise RuntimeError('Unable to get column number for {0} due to {1}'
+                               ''.format(roi_name, index_err))
+
+        # set value
+        self.update_cell_value(row_number, col_number, value)
+
+        return
+
+    def setup(self, index_name, index_type, roi_name_list):
+        """
+        Init setup
+        :return:
+        """
+        # check inputs
+        assert isinstance(index_name, str), 'Index column name must be a string'
+        assert isinstance(index_type, str), 'Index column type must be a string'
+        self.check_cell_type(index_type, raise_if_wrong=True)
+
+        # set up the set up list
+        self._tableSetupList = list()
+        self._tableSetupList.append((index_name, index_type))
+        for roi_name in sorted(roi_name_list):
+                self._tableSetupList.append((str(roi_name), 'float'))
+        # END-FOR
+        self._tableSetupList.append(('Result', 'float'))
+
+        # do set up
+        self.init_setup(self._tableSetupList)
+
+        return
+
+
 class ScanListTable(tableBase.NTableWidget):
     """
     Extended table widget for peak integration

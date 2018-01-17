@@ -177,7 +177,6 @@ class IPyAnalysisWidget(RichIPythonWidget):
 
         # NOTE/TODO - This section can be enabled to link current session to parent workspace
 
-
         if False and self._mainApplication is not None:
             # post_workspace_names = set(mtd.getObjectNames())
             # diff_set = post_workspace_names - prev_workspace_names

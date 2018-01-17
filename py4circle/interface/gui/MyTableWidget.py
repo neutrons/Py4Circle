@@ -79,6 +79,24 @@ class NTableWidget(QtGui.QTableWidget):
 
         return True, ret_msg
 
+    @staticmethod
+    def check_cell_type(cell_type, raise_if_wrong):
+        """
+        check whether the cell type is supported or not
+        :param cell_type:
+        :param raise_if_wrong:
+        :return:
+        """
+        if cell_type == 'string' or cell_type == 'int' or cell_type == 'float' \
+                or cell_type == 'double' or cell_type == 'checkbox':
+            return True
+
+        if raise_if_wrong:
+            raise RuntimeError('Cell type {0} is not supported. Supported types are '
+                               'string, int, float, double or checkbox'.format(cell_type))
+
+        return False
+
     def delete_rows(self, row_number_list):
         """ Delete rows
         :param row_number_list:
@@ -249,8 +267,8 @@ class NTableWidget(QtGui.QTableWidget):
         :return:
         """
         # Check requirements
-        assert isinstance(column_tup_list, list)
-        assert len(column_tup_list) > 0
+        assert isinstance(column_tup_list, list), 'Column tuple list {0} must be a list.'.format(column_tup_list)
+        assert len(column_tup_list) > 0, 'Column tuple list must have more than 1 item.'
 
         # Define column headings
         num_cols = len(column_tup_list)
@@ -266,7 +284,11 @@ class NTableWidget(QtGui.QTableWidget):
             self._myColumnTypeList.append(c_type)
 
         self.setColumnCount(num_cols)
-        self.setHorizontalHeaderLabels(self._myColumnNameList)
+        try:
+            self.setHorizontalHeaderLabels(self._myColumnNameList)
+        except TypeError as type_error:
+            print ('[ERROR] Set table header by {0}'.format(self._myColumnNameList))
+            raise type_error
 
         # Set the editable flags
         self._editableList = [False] * num_cols

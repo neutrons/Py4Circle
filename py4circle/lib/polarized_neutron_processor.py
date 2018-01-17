@@ -40,6 +40,9 @@ class FourCirclePolarizedNeutronProcessor(object):
         self._refWorkspaceForMask = None
         self._roiDict = dict()
 
+        # dictionary to hold loaded detector count matrix loaded from SPICE XML file
+        self._loadedData = dict()
+
         return
 
     def _add_spice_workspace(self, exp_no, scan_no, spice_table_ws):
@@ -315,71 +318,49 @@ class FourCirclePolarizedNeutronProcessor(object):
 
         return det_matrix, sum_count
 
-    def integrate_counts(self, ws_name, pixel_range_list):
+    def integrate_roi(self, exp_number, scan_number, roi_range):
         """
-        integrate counts of a workspace
-        :param ws_name:
-        :param pixel_range_list:
-        :return:  2-tuple: list of Pts and numpy array of integrated counts
-        """
-        matrix_workspace = AnalysisDataService.retrieve(ws_name)
-
-        # assume that pixel ID and workspace index has 1-on-1 mapping
-        # FIXME - Redo XML file loading in pure python later
-        integrated_count = 0
-        for det_id_start, det_id_stop in pixel_range_list:
-            for det_id in range(det_id_start, det_id_stop):
-                integrated_count += matrix_workspace.readY(det_id)[0]
-
-        return integrated_count
-
-    def integrate_roi(self, exp_number, scan_number, pixel_range_list):
-        """
-        Integrate counts in a given ROI
-        :param pixel_range_list:
-        :return:
+        integrate counts in a given ROI
+        :param exp_number:
+        :param scan_number:
+        :param roi_range:
+        :return: (list, numpy.ndarray): list as the list of pt numbers.  numpy.ndarray (1D) for integrated values
         """
         # check inputs
-        assert isinstance(pixel_range_list, list), 'Input {0} must be a list of 2-tuples but not a {1}.' \
-                                                   ''.format(pixel_range_list, type(pixel_range_list))
         assert isinstance(exp_number, int), 'Experiment number {0} must be an integer but not a {1}' \
                                             ''.format(exp_number, type(exp_number))
         assert isinstance(scan_number, int), 'Scan number {0} must be an integer but not a {1}' \
                                              ''.format(scan_number, type(scan_number))
-
         if exp_number != self._expNumber:
             raise RuntimeError('Input experiment number {0} and stored experiment number {1} do '
                                'not match.'.format(exp_number, self._expNumber))
 
-        # load all Pts. in this scan
+        # parse RIO range
+        try:
+            min_row = int(roi_range[0][0])
+            min_col = int(roi_range[0][1])
+            max_row = int(roi_range[1][0])
+            max_col = int(roi_range[1][1])
+        except IndexError as index_rror:
+            raise RuntimeError('Input ROI {0} does not have 2 x 2 elements.'.format(roi_range))
+
+        # load all Pts. in this scan and do integration (simple summing)
         status, pt_number_list = self.get_pt_numbers(exp_number, scan_number)
         if not status:
             err_msg = pt_number_list
             raise RuntimeError('Unable to retrieve pt numbers from experiment {0} scan {1} due to {2}'
                                ''.format(exp_number, scan_number, err_msg))
         ws_pt_list = list()
-        for pt_number in pt_number_list:
-            status, ws_name = self.load_spice_xml_file(exp_no=exp_number, scan_no=scan_number, pt_no=pt_number,
-                                                       over_write_existing=False)
-            if not status:
-                print '[ERROR] unable to load exp {0} scan {1}'.format(exp_number, scan_number)
-
-            ws_pt_list.append((pt_number, ws_name))
+        integrated_list = list()
+        for pt_number in sorted(pt_number_list):
+            count_matrix = self.load_spice_xml_file2(exp_no=exp_number, scan_no=scan_number, pt_no=pt_number)
+            roi_counts = numpy.sum(count_matrix[min_row:max_row, min_col:max_col])
+            ws_pt_list.append(pt_number)
+            integrated_list.append(roi_counts)
         # END-FOR
 
-        # integrate
-
-        print '[DB...BAT] Spice Table:   {0}'.format(self._mySpiceTableDict)
-        print '[DB...BAT] Raw Workspace: {0}'.format(self._myRawDataWSDict)
-
-        vec_integrated = numpy.ndarray(shape=(len(ws_pt_list),), dtype='float')
-        pt_number_list = list()
-        for ipt, tup in enumerate(ws_pt_list):
-            pt_number, ws_name = tup
-            integrated_signal = self.integrate_counts(ws_name, pixel_range_list)
-            vec_integrated[ipt] = integrated_signal
-            pt_number_list.append(pt_number)
-        # END-FOR
+        # convert to numpy array
+        vec_integrated = numpy.array(integrated_list)
 
         return pt_number_list, vec_integrated
 
@@ -426,15 +407,26 @@ class FourCirclePolarizedNeutronProcessor(object):
         return True, out_ws_name
 
     def load_spice_xml_file2(self, exp_no, scan_no, pt_no, xml_file_name=None):
-        """
-
+        """ Load SPICE XML file using pure python method developed in this set
         @param exp_no:
         @param scan_no:
         @param pt_no:
         @param xml_file_name:
         @return:
         """
-        # TODO FIXME ASAP : need a matrix holder to manage the loaded data
+        # check input
+        assert isinstance(exp_no, int), 'Experiment number {0} shall be integer but not a {1}' \
+                                        ''.format(exp_no, type(exp_no))
+        assert isinstance(scan_no, int), 'Scan number {0} shall be integer but not {1}' \
+                                         ''.format(scan_no, type(scan_no))
+        assert isinstance(pt_no, int), 'Pt number {0} shall be integer but not {1}'.format(pt_no, type(pt_no))
+
+        # check whether it has been loaded
+        if (exp_no, scan_no, pt_no) in self._loadedData:
+            assert isinstance(self._loadedData[(exp_no, scan_no, pt_no)], numpy.ndarray),\
+                'Loaded data must be a numpy ndarray'
+            return self._loadedData[(exp_no, scan_no, pt_no)]
+
         # Get XML file name with full path
         if xml_file_name is None:
             # use default
@@ -446,9 +438,16 @@ class FourCirclePolarizedNeutronProcessor(object):
         # END-IF
 
         # check whether file exists
-        assert os.path.exists(xml_file_name), 'TODO'
+        if os.path.exists(xml_file_name) is False:
+            raise RuntimeError('SPICE detector count XML file {0} for Exp {1} Scan {2} Pt {3} does not exist.'
+                               ''.format(xml_file_name, exp_no, scan_no, pt_no))
 
+        # load data
         count_matrix = parse_spice_xml.get_counts_xml_file(xml_file_name)
+        assert isinstance(count_matrix, numpy.ndarray), 'Returned counts must be stored in numpy.ndarray'
+
+        # store
+        self._loadedData[(exp_no, scan_no, pt_no)] = count_matrix
 
         return count_matrix
 
@@ -510,15 +509,15 @@ class FourCirclePolarizedNeutronProcessor(object):
         return True, pt_ws_name
    
     def set_exp_number(self, exp_number):
-       """ Add experiment number
-       :param exp_number:
-       :return:
-       """
-       assert isinstance(exp_number, int), 'blabla'
-       self._expNumber = exp_number
+        """ Add experiment number
+        :param exp_number:
+        :return:
+        """
+        assert isinstance(exp_number, int), 'Experiment number {0} must be an integer but not a {1}.' \
+                                            ''.format(exp_number, type(exp_number))
+        self._expNumber = exp_number
 
-       return True
-   
+        return True
    
     def set_local_data_dir(self, local_dir):
         """
@@ -551,7 +550,7 @@ class FourCirclePolarizedNeutronProcessor(object):
     def set_working_directory(self, work_dir):
         """
         Set up the directory for working result
-        :return: (boolean, string)
+        :return: (boolean, string).
         """
         if os.path.exists(work_dir) is False:
             try:
@@ -565,7 +564,6 @@ class FourCirclePolarizedNeutronProcessor(object):
 
         return True, ''
 
-
     def survey(self, exp_number, start_scan, end_scan):
         """ Load all the SPICE ascii file to get the big picture such that
         * the strongest peaks and their HKL in order to make data reduction and analysis more convenient
@@ -578,7 +576,7 @@ class FourCirclePolarizedNeutronProcessor(object):
         assert isinstance(exp_number, int), 'Experiment number must be an integer but not %s.' % type(exp_number)
         if isinstance(start_scan, int) is False:
             start_scan = 1
-        if isinstance(end_scan , int) is False:
+        if isinstance(end_scan, int) is False:
             end_scan = MAX_SCAN_NUMBER
 
         # Output workspace

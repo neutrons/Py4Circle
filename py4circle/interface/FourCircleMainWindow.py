@@ -78,6 +78,10 @@ class FourCircleMainWindow(QtGui.QMainWindow):
         self.connect(self.ui.pushButton_roiRight, QtCore.SIGNAL('clicked()'),
                      self.do_move_roi_right)
 
+        # menu
+        self.connect(self.ui.actionShow_Result_Window, QtCore.SIGNAL('triggered()'),
+                     self.menu_show_result_view)
+
         # list of ROI radio buttons
         self._roiSelectorDict = {-1: self.ui.radioButton_roiAll,
                                  0: self.ui.radioButton_roiNo1,
@@ -239,6 +243,7 @@ class FourCircleMainWindow(QtGui.QMainWindow):
         """
         # get all the ROI's region
         roi_dimension_dict = self.ui.graphicsView_detector2dPlot.get_roi_dimensions()
+        roi_color_dict = self.ui.graphicsView_detector2dPlot.get_roi_colors()
 
         # integrate
         integrated_value_dict = dict()
@@ -254,36 +259,37 @@ class FourCircleMainWindow(QtGui.QMainWindow):
             print ('[DB...BAT] Pixel Range: {0}'.format(pixel_range))
 
             # convert to numpy array range
-
             min_row = (256 - 1) - int(left_bottom_y + height + 1)
             min_col = int(left_bottom_x - 1)
             max_row = min_row + int(height) + 2
             max_col = int(min_col + width)
             matrix_range = (min_row, min_col), (max_row, max_col)
 
+            pt_list, counts_vector = self._myControl.integrate_roi(int(self.ui.lineEdit_exp.text()),
+                                                                   int(self.ui.lineEdit_run.text()),
+                                                                    matrix_range)
+            integrated_value_dict[roi_name] = pt_list, counts_vector
+
+            # FIXME - Remove this part after testing is over
             counts_matrix, count_sum = self._myControl.mask_roi(int(self.ui.lineEdit_exp.text()),
                                                                 int(self.ui.lineEdit_run.text()),
                                                                 int(self.ui.lineEdit_rawDataPtNo.text()),
                                                                 matrix_range)
-
             det_shape = counts_matrix.shape
             self.ui.graphicsView_detector2dPlot.add_2d_plot(counts_matrix, x_min=0, x_max=det_shape[0], y_min=0,
                                                             y_max=det_shape[1],
                                                             hold_prev_image=False, plot_type='image')
-
             self.ui.plainTextEdit_rawDataInformation.setPlainText('Pixel Range: {0}; Matirix Range: {1}; Counts = {2}'
                                                                   ''.format(pixel_range, matrix_range, count_sum))
+            # END-OF-FIXME
 
-
-            # pixel_range_list = self.convert_roi_dim_to_pixels((left_bottom_x, left_bottom_y), width=width,
-            #                                                   height=height)
-            # integrated_value_dict[roi_name] = self._myControl.integrate_roi(int(self.ui.lineEdit_exp.text()),
-            #                                                                 int(self.ui.lineEdit_run.text()),
-            #                                                                 pixel_range_list)
+            # plotting
 
         # create a dialog/window for the result
-        self._integratedViewWindow = IntegratedROIView(self)
+        if self._integratedViewWindow is None:
+            self._integratedViewWindow = IntegratedROIView(self)
         self._integratedViewWindow.show()
+        self._integratedViewWindow.set_integrated_value(integrated_value_dict, roi_color_dict)
 
         return
 
@@ -669,6 +675,18 @@ class FourCircleMainWindow(QtGui.QMainWindow):
                                                       'Scan', scan_no,
                                                       'Pt', pt_no)
         self.ui.plainTextEdit_rawDataInformation.setPlainText(info)
+
+        return
+
+    def menu_show_result_view(self):
+        """
+        show result view window
+        :return:
+        """
+        if self._integratedViewWindow is None:
+            self.pop_one_button_dialog('Result window has not been initialized yet.')
+        else:
+            self._integratedViewWindow.show()
 
         return
 
