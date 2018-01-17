@@ -21,7 +21,11 @@ class IntegratedCountsTable(tableBase.NTableWidget):
 
         # set up list
         self._tableSetupList = list()
+        self._tableColumnNames = list()
+        # dictionary to map Pt number to row number
         self._ptNumberDict = dict()
+        # calculated value column number
+        self._calculatedColumnIndex = None
 
         return
 
@@ -43,6 +47,87 @@ class IntegratedCountsTable(tableBase.NTableWidget):
 
         # add to management
         self._ptNumberDict[pt_number] = self.rowCount() - 1
+
+        return
+
+    def get_column_data(self, col_name):
+        """
+        get column data
+        :param col_name:
+        :return:
+        """
+        # check input
+        assert isinstance(col_name, str), 'Column name {0} must be an integer but not a {1}.' \
+                                          ''.format(col_name, type(col_name))
+
+        # get column
+        try:
+            col_index = self._tableColumnNames.index(col_name)
+        except IndexError:
+            err_msg = 'Column name {0} does not exist in table whose columns are {1}' \
+                      ''.format(col_name, self._tableColumnNames)
+            raise RuntimeError(err_msg)
+
+        # set up vector
+        num_rows = self.rowCount()
+        value_list = list()
+        for row_index in range(num_rows):
+            value_list.append(self.get_cell_value(row_index, col_index))
+
+        return numpy.array(value_list)
+
+    def get_integrated_counts(self, pt_number=None, row_number=None):
+        """ get the integrated counts of one row or one certain Pt
+        :param pt_number:
+        :param row_number:
+        :return:
+        """
+        # check input and parse pt number to row number
+        if pt_number is None and row_number is None:
+            raise RuntimeError('Neither Pt number nor row number is given.')
+        elif pt_number is not None:
+            assert isinstance(pt_number, int), 'Pt number {0} must be an integer but not a {1}' \
+                                               ''.format(pt_number, type(pt_number))
+            row_number = self._ptNumberDict[pt_number]
+        elif row_number is not None:
+            assert isinstance(row_number, int), 'Row number {0} must be an integer but not a {1}' \
+                                               ''.format(row_number, type(row_number))
+        else:
+            raise RuntimeError('Pt number and row number cannot be given simultaneously')
+
+        # set the dictionary
+        value_dict = dict()
+        for col_index, col_tup in enumerate(self._tableSetupList):
+            col_name = col_tup[0]
+            if '0' <= col_name <= '9':
+                col_name = 'roi{0}'.format(col_name)
+            if col_index == self._calculatedColumnIndex:
+                allow_blank = True
+            else:
+                allow_blank =  False
+            value_dict[col_name] = self.get_cell_value(row_number, col_index, allow_blank)
+        # END-FOR
+
+        print ('[DB...BAT] Integrated counts: {0}'.format(value_dict))
+
+        return value_dict
+
+    def set_calculated_value(self, pt_number, value):
+        """
+        set the calculated value to the table
+        :param pt_number:
+        :param value:
+        :return:
+        """
+        # get row number
+        try:
+            row_number = self._ptNumberDict[pt_number]
+        except KeyError as key_err:
+            raise RuntimeError('Pt number {0} ({1}) does not exist in table. FYI {2}.'
+                               ''.format(pt_number, type(pt_number), key_err))
+
+        # update value
+        self.update_cell_value(row_number, self._calculatedColumnIndex, value)
 
         return
 
@@ -68,7 +153,7 @@ class IntegratedCountsTable(tableBase.NTableWidget):
 
         # get column number
         try:
-            col_number = self._tableSetupList.index((roi_name, 'float'))
+            col_number = self._tableColumnNames.index(roi_name)
         except ValueError as index_err:
             raise RuntimeError('Unable to get column number for {0} due to {1}'
                                ''.format(roi_name, index_err))
@@ -90,11 +175,19 @@ class IntegratedCountsTable(tableBase.NTableWidget):
 
         # set up the set up list
         self._tableSetupList = list()
+        self._tableColumnNames = list()
+
+        # first item
         self._tableSetupList.append((index_name, index_type))
+        self._tableColumnNames.append(index_name)
+
         for roi_name in sorted(roi_name_list):
-                self._tableSetupList.append((str(roi_name), 'float'))
+            self._tableSetupList.append((str(roi_name), 'float'))
+            self._tableColumnNames.append(str(roi_name))
         # END-FOR
         self._tableSetupList.append(('Result', 'float'))
+        self._tableColumnNames.append('Result')
+        self._calculatedColumnIndex = len(self._tableSetupList) - 1
 
         # do set up
         self.init_setup(self._tableSetupList)

@@ -31,7 +31,48 @@ class IntegratedROIView(QtGui.QMainWindow):
         self.connect(self.ui.pushButton_showExamples, QtCore.SIGNAL('clicked()'),
                      self.do_show_examples)
 
+        self.connect(self.ui.pushButton_calculate, QtCore.SIGNAL('clicked()'),
+                     self.do_calculation)
+
+        self.connect(self.ui.pushButton_plotTableData, QtCore.SIGNAL('clicked()'),
+                     self.do_plot_data)
+
+        self.connect(self.ui.pushButton_clearImage, QtCore.SIGNAL('clicked()'),
+                     self.do_clear_plots)
+
         return
+
+    @staticmethod
+    def calculate_by_formula(formula, value_dict):
+        """
+        calculate a formula
+        :param formula:
+        :param value_dict: 
+        :return: 
+        """
+        # check inputs
+        assert isinstance(formula, str), 'Input formula {0} must be a string but not a {1}.' \
+                                         ''.format(formula, type(formula))
+        assert isinstance(value_dict, dict), 'Values {0} shall be given in a dictionary but not {1}' \
+                                             ''.format(value_dict, type(value_dict))
+
+        # replace the variables with real value
+        print ('[DB...BAT] Input formula: {0}'.format(formula))
+        for var_name in value_dict.keys():
+            formula = formula.replace(var_name, str(value_dict[var_name]))
+        print ('[DB...BAT] Translated formula: {0}'.format(formula))
+
+        # execute
+        try:
+            if formula.count('=') == 0:
+                formula = '_cal_value = {0}'.format(formula)
+            dynamic_code = compile(formula, '<string>', 'exec')
+            # dynamic_code = compile('a = 1 + 2', '<string>', 'exec')
+            exec dynamic_code
+        except NameError as name_err:
+            raise name_err
+
+        return _cal_value
 
     def clear_plots(self):
         """
@@ -49,12 +90,38 @@ class IntegratedROIView(QtGui.QMainWindow):
         """
         self.ui.tableView_result.remove_rows()
 
+    def do_clear_plots(self):
+        """
+        clear plots
+        :return:
+        """
+        self.clear_plots()
+
     def do_close_window(self):
         """
         close window
         :return:
         """
         self.close()
+
+        return
+
+    def do_plot_data(self):
+        """
+        plot data
+        :return:
+        """
+        # parse what to plot
+        col_name_list = str(self.ui.lineEdit_tableColsToPlot.text()).strip().split(',')
+
+        # get data
+        vec_x = self.ui.tableView_result.get_column_data('Pt')
+        for col_name in col_name_list:
+            col_name = col_name.strip()
+            vec_y = self.ui.tableView_result.get_column_data(col_name)
+            self.ui.graphicsView_result.plot_roi(vec_x, vec_y, color='black', roi_name=col_name, title_x='Pt',
+                                                 unit='')
+        # END-FOR
 
         return
 
@@ -71,6 +138,26 @@ class IntegratedROIView(QtGui.QMainWindow):
             return
 
         # save result
+
+        return
+
+    def do_calculation(self):
+        """
+        do calculation of the ROIs
+        :return:
+        """
+        # read the formula
+        cal_formula = str(self.ui.lineEdit_roiFormular.text())
+        print ('[DB] Input is {0}'.format(cal_formula))
+
+        # calculate
+        num_rows = self.ui.tableView_result.rowCount()
+        for row_index in range(num_rows):
+            integrated_counts = self.ui.tableView_result.get_integrated_counts(row_number=row_index)
+            value = self.calculate_by_formula(cal_formula, integrated_counts)
+            pt_number = integrated_counts['Pt']
+            self.ui.tableView_result.set_calculated_value(pt_number=pt_number, value=value)
+        # END-FOR
 
         return
 

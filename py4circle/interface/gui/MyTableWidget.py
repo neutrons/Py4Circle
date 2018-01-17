@@ -152,13 +152,14 @@ class NTableWidget(QtGui.QTableWidget):
 
         return
 
-    def get_cell_value(self, row_index, col_index):
+    def get_cell_value(self, row_index, col_index, allow_blank=False):
         """
         Purpose: Get cell value
         Requirements: row index and column index are integer and within range.
         Guarantees: the cell value with correct type is returned
         :param row_index:
         :param col_index:
+        :param allow_blank: if True, return a None if the cell is blank
         :return:
         """
         # check
@@ -182,7 +183,9 @@ class NTableWidget(QtGui.QTableWidget):
             assert isinstance(item_i_j, QtGui.QTableWidgetItem)
 
             return_value = str(item_i_j.text())
-            if return_value == 'None':
+            if allow_blank and len(return_value.strip()) == 0:
+                return_value = None
+            elif return_value == 'None':
                 return_value = None
             elif cell_data_type == 'int':
                 return_value = int(return_value)

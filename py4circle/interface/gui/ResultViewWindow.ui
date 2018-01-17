@@ -34,6 +34,23 @@
        </spacer>
       </item>
       <item>
+       <widget class="QPushButton" name="pushButton_plotTableData">
+        <property name="text">
+         <string>Plot</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="lineEdit_tableColsToPlot"/>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_clearImage">
+        <property name="text">
+         <string>Clear</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="pushButton_saveResult">
         <property name="text">
          <string>Save</string>
