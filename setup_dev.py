@@ -188,7 +188,7 @@ setup_args['tests_require'] = read_requirements_from_file(os.path.join(THIS_DIR,
 
 # Startup scripts - these use the mantidpython wrappers so we cannot
 # go through the entry_points mechanism
-scripts = ['scripts/Lava.py']
+scripts = ['scripts/four']
 # if os.name == 'nt':
 #     scripts.append('scripts/mslice.bat')
 # else:
