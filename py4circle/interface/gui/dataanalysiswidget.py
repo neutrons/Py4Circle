@@ -6,7 +6,8 @@
 from ipythonanalysiswidget import IPyAnalysisWidget
 
 try:
-    from PyQt5 import QtCore, QtWidgets
+    from PyQt5 import QtCore
+    from PyQt5.QtWidgets import QWidget
 except ImportError:
     from PyQt4 import QtCore
     from PyQt4.QtGui import QWidget

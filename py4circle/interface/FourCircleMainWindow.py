@@ -1,7 +1,7 @@
 import numpy as np
 try:
     from PyQt5 import QtCore
-    from QtWidgets import QMainWindow, QFileDialog, QMessageBox
+    from PyQt5.QtWidgets import QMainWindow, QFileDialog, QMessageBox
 except ImportError:
     from PyQt4 import QtCore
     from PyQt4.QtGui import QMainWindow, QFileDialog, QMessageBox

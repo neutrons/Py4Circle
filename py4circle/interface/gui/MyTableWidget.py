@@ -5,7 +5,7 @@ from six.moves import range
 import csv
 try:
     from PyQt5 import QtGui, QtCore
-    from PyQt5.QtGui import QTableWidget, QTableWidgetItem
+    from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem
 except ImportError:
     from PyQt4.QtGui import QTableWidget, QTableWidgetItem
     from PyQt4 import QtCore
