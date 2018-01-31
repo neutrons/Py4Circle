@@ -1,9 +1,9 @@
-from PyQt4 import QtGui, QtCore
+from PyQt5 import QtWidgets, QtCore
 import gui.ResultViewWindow_ui
 import numpy as np
 
 
-class IntegratedROIView(QtGui.QMainWindow):
+class IntegratedROIView(QtWidgets.QMainWindow):
     """
     Extended QMainWindow class for plotting and processing integrated ROI for polarized neutron experiment
     """
@@ -132,7 +132,7 @@ class IntegratedROIView(QtGui.QMainWindow):
         """
         # get the target directory
         file_filter = 'Data Files (*.dat);;All Files (*.*)'
-        target_dir = str(QtGui.QFileDialog.getOpenFileName(self, self._workingDir, file_filter))
+        target_dir = str(QtWidgets.QFileDialog.getOpenFileName(self, self._workingDir, file_filter))
         if len(target_dir) == 0:
             # quit if user cancel the operation
             return
@@ -168,7 +168,7 @@ class IntegratedROIView(QtGui.QMainWindow):
         """
         message = 'roi1 - roi2 + 3 * (roi3)'
 
-        QtGui.QMessageBox.information(self, 'Polarized Data Analysis Example', message)
+        QtWidgets.QMessageBox.information(self, 'Polarized Data Analysis Example', message)
 
         return
 

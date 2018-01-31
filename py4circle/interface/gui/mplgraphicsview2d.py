@@ -2,11 +2,11 @@
 import os
 import numpy as np
 
-from PyQt4 import QtGui, QtCore
-from PyQt4.QtCore import pyqtSignal
+from PyQt5 import QtWidgets, QtCore
+from PyQt5.QtCore import pyqtSignal
 
-from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar2
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar2
 from matplotlib.figure import Figure
 import matplotlib.image
 import matplotlib.pyplot as plt
@@ -50,7 +50,7 @@ MplBasicColors = [
     "yellow"]
 
 
-class MplGraphicsView2D(QtGui.QWidget):
+class MplGraphicsView2D(QtWidgets.QWidget):
     """ A combined graphics view including matplotlib canvas and
     a navigation tool bar
 
@@ -72,7 +72,7 @@ class MplGraphicsView2D(QtGui.QWidget):
         self._homeXYLimit = None
 
         # set up layout
-        self._vBox = QtGui.QVBoxLayout(self)
+        self._vBox = QtWidgets.QVBoxLayout(self)
         self._vBox.addWidget(self._myCanvas)
         self._vBox.addWidget(self._myToolBar)
 
@@ -430,7 +430,7 @@ class MplGraphicsView2D(QtGui.QWidget):
 
 class Qt4Mpl2DCanvas(FigureCanvas):
     """  A customized Qt widget for matplotlib figure.
-    It can be used to replace GraphicsView of QtGui
+    It can be used to replace GraphicsView of QtWidgets
     """
     def __init__(self, parent):
         """  Initialization
@@ -456,7 +456,7 @@ class Qt4Mpl2DCanvas(FigureCanvas):
         self.setParent(parent)
 
         # Set size policy to be able to expanding and resizable with frame
-        FigureCanvas.setSizePolicy(self, QtGui.QSizePolicy.Expanding,QtGui.QSizePolicy.Expanding)
+        FigureCanvas.setSizePolicy(self, QtWidgets.QSizePolicy.Expanding,QtWidgets.QSizePolicy.Expanding)
         FigureCanvas.updateGeometry(self)
 
         # Variables to manage all lines/subplot

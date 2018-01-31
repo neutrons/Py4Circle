@@ -3,7 +3,7 @@
 from __future__ import (absolute_import, division, print_function)
 from six.moves import range
 import csv
-from PyQt4 import QtGui, QtCore
+from PyQt5 import QtGui, QtCore, QtWidgets
 
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
@@ -12,7 +12,7 @@ except AttributeError:
         return s
 
 
-class NTableWidget(QtGui.QTableWidget):
+class NTableWidget(QtWidgets.QTableWidget):
     """
     NdavTableWidget inherits from QTableWidget by extending the features
     for easy application.
@@ -24,7 +24,7 @@ class NTableWidget(QtGui.QTableWidget):
         :param parent:
         :return:
         """
-        QtGui.QTableWidget.__init__(self, parent)
+        QtWidgets.QTableWidget.__init__(self, parent)
 
         self._myParent = parent
 
@@ -63,7 +63,7 @@ class NTableWidget(QtGui.QTableWidget):
 
         # Set values
         for i_col in range(min(len(row_value_list), self.columnCount())):
-            item = QtGui.QTableWidgetItem()
+            item = QtWidgets.QTableWidgetItem()
             if row_value_list[i_col] is None:
                 item_value = ''
             else:

@@ -16,7 +16,7 @@ RegexLexer.get_tokens_unprocessed_unpatched = RegexLexer.get_tokens_unprocessed
 from qtconsole.rich_ipython_widget import RichIPythonWidget
 from qtconsole.inprocess import QtInProcessKernelManager
 
-from PyQt4 import QtGui
+from PyQt5 import QtGui
 
 
 def our_run_code(self, code_obj, result=None):

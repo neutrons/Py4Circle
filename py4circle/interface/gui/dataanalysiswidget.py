@@ -5,7 +5,7 @@
 ########################################################################
 from ipythonanalysiswidget import IPyAnalysisWidget
 
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 from MyTableWidget import  NTableWidget
 from mplgraphicsview1d import MplGraphicsView1D
 
@@ -17,7 +17,7 @@ except AttributeError:
         return s
 
 
-class WorkspaceViewWidget(QtGui.QWidget):
+class WorkspaceViewWidget(QtWidgets.QWidget):
     """ Class for general-purposed plot window
     """
     # reserved command
@@ -29,7 +29,7 @@ class WorkspaceViewWidget(QtGui.QWidget):
         import ui_WorkspacesView_ui as ui_WorkspacesView
 
         # call base
-        QtGui.QWidget.__init__(self)
+        QtWidgets.QWidget.__init__(self)
 
         # Parent & others
         self._myMainWindow = None

@@ -1,5 +1,5 @@
 import numpy as np
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtWidgets
 import os
 import gui.MainWindow_ui as MainWindow_ui
 import guiutility as gutil
@@ -7,7 +7,7 @@ import py4circle.lib.polarized_neutron_processor as polarized_neutron_processor
 from py4circle.interface.integrratedroiview import IntegratedROIView
 
 
-class FourCircleMainWindow(QtGui.QMainWindow):
+class FourCircleMainWindow(QtWidgets.QMainWindow):
     """
     blabla
     """
@@ -209,7 +209,7 @@ class FourCircleMainWindow(QtGui.QMainWindow):
     def do_browse_local_spice_data(self):
         """ Browse local source SPICE data directory
         """
-        src_spice_dir = str(QtGui.QFileDialog.getExistingDirectory(self, 'Get Directory',
+        src_spice_dir = str(QtWidgets.QFileDialog.getExistingDirectory(self, 'Get Directory',
                                                                    self._homeSrcDir))
         # Set local data directory to controller
         status, error_message = self._myControl.set_local_data_dir(src_spice_dir)
@@ -227,7 +227,7 @@ class FourCircleMainWindow(QtGui.QMainWindow):
         Browse and set up working directory
         :return:
         """
-        work_dir = str(QtGui.QFileDialog.getExistingDirectory(self, 'Get Working Directory', self._homeDir))
+        work_dir = str(QtWidgets.QFileDialog.getExistingDirectory(self, 'Get Working Directory', self._homeDir))
         status, error_message = self._myControl.set_working_directory(work_dir)
         if status is False:
             self.pop_one_button_dialog(error_message)
@@ -728,7 +728,7 @@ class FourCircleMainWindow(QtGui.QMainWindow):
         """
         assert isinstance(message, str), 'Input message %s must a string but not %s.' \
                                          '' % (str(message), type(message))
-        QtGui.QMessageBox.information(self, '4-circle Data Reduction', message)
+        QtWidgets.QMessageBox.information(self, '4-circle Data Reduction', message)
 
         return
 

@@ -1,6 +1,7 @@
 import os
 import sys
 sys.path.append('/Users/wzz/MantidBuild/debug-stable/bin/')
+sys.path.append('/opt/mantidnightly/bin/')
 
 import numpy
 import mantid

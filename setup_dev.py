@@ -129,7 +129,7 @@ class build_py(_build_py):
 
     @staticmethod
     def compile_ui(ui_file, py_file):
-        from PyQt4 import uic
+        from PyQt5 import uic
 
         with open(py_file, 'w') as fp:
             uic.compileUi(ui_file, fp)
@@ -157,7 +157,7 @@ setup_args = dict(name=NAME,
                   author='The Mantid Project',
                   author_email='mantid-help@mantidproject.org',
                   url=__project_url__,
-                  keywords=['PyQt4'],
+                  keywords=['PyQt5'],
                   packages=find_packages(exclude=["misc"]),
                   data_files=get_data_files(),
                   # Fool setup.py to running the tests on a built copy (this feels like a hack)
@@ -179,7 +179,7 @@ setup_args = dict(name=NAME,
 setup_args['setup_requires'] = read_requirements_from_file(os.path.join(THIS_DIR, 'setup-requirements.txt'))
 
 # User installation requires the following dependencies
-# PyQt4 cannot be installed from pip so they cannot be added here
+# PyQt5 cannot be installed from pip so they cannot be added here
 install_requires = setup_args['install_requires'] = \
     read_requirements_from_file(os.path.join(THIS_DIR, 'install-requirements.txt'))
 # Testing requires
