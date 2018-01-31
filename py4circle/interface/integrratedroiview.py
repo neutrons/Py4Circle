@@ -1,9 +1,14 @@
-from PyQt5 import QtWidgets, QtCore
+try:
+    from PyQt5 import QtCore
+    from QtWidgets import QMainWindow, QFileDialog, QMessageBox
+except ImportError:
+    from PyQt4 import QtCore
+    from PyQt4.QtGui import QMainWindow, QFileDialog, QMessageBox
 import gui.ResultViewWindow_ui
 import numpy as np
 
 
-class IntegratedROIView(QtWidgets.QMainWindow):
+class IntegratedROIView(QMainWindow):
     """
     Extended QMainWindow class for plotting and processing integrated ROI for polarized neutron experiment
     """
@@ -22,23 +27,20 @@ class IntegratedROIView(QtWidgets.QMainWindow):
         self.ui.graphicsView_result.set_subplots(1, 1)
 
         # define event handling related with widgets
-        self.connect(self.ui.pushButton_saveResult, QtCore.SIGNAL('clicked()'),
-                     self.do_save_integrated)
+        self.ui.pushButton_saveResult.clicked.connect(self.do_save_integrated)
+        self.ui.pushButton_closeWindow.clicked.connect(self.do_close_window)
 
-        self.connect(self.ui.pushButton_closeWindow, QtCore.SIGNAL('clicked()'),
-                     self.do_close_window)
-
-        self.connect(self.ui.pushButton_showExamples, QtCore.SIGNAL('clicked()'),
-                     self.do_show_examples)
-
-        self.connect(self.ui.pushButton_calculate, QtCore.SIGNAL('clicked()'),
-                     self.do_calculation)
-
-        self.connect(self.ui.pushButton_plotTableData, QtCore.SIGNAL('clicked()'),
-                     self.do_plot_data)
-
-        self.connect(self.ui.pushButton_clearImage, QtCore.SIGNAL('clicked()'),
-                     self.do_clear_plots)
+        # self.connect(self.ui.pushButton_showExamples, QtCore.SIGNAL('clicked()'),
+        #              self.do_show_examples)
+        #
+        # self.connect(self.ui.pushButton_calculate, QtCore.SIGNAL('clicked()'),
+        #              self.do_calculation)
+        #
+        # self.connect(self.ui.pushButton_plotTableData, QtCore.SIGNAL('clicked()'),
+        #              self.do_plot_data)
+        #
+        # self.connect(self.ui.pushButton_clearImage, QtCore.SIGNAL('clicked()'),
+        #              self.do_clear_plots)
 
         return
 
@@ -132,7 +134,7 @@ class IntegratedROIView(QtWidgets.QMainWindow):
         """
         # get the target directory
         file_filter = 'Data Files (*.dat);;All Files (*.*)'
-        target_dir = str(QtWidgets.QFileDialog.getOpenFileName(self, self._workingDir, file_filter))
+        target_dir = str(QFileDialog.getOpenFileName(self, self._workingDir, file_filter))
         if len(target_dir) == 0:
             # quit if user cancel the operation
             return
@@ -168,7 +170,7 @@ class IntegratedROIView(QtWidgets.QMainWindow):
         """
         message = 'roi1 - roi2 + 3 * (roi3)'
 
-        QtWidgets.QMessageBox.information(self, 'Polarized Data Analysis Example', message)
+        QMessageBox.information(self, 'Polarized Data Analysis Example', message)
 
         return
 

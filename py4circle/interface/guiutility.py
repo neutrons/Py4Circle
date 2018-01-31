@@ -6,7 +6,12 @@ from six.moves import range
 import math
 import numpy
 import os
-from PyQt5 import QtWidgets, QtCore
+try:
+    from PyQt5 import QtCore
+    from PyQt5.QtWidgets import QLineEdit, QDialog, QVBoxLayout, QDialogButtonBox, QPlainTextEdit
+except ImportError:
+    from PyQt4.QtGui import QLineEdit, QDialog, QVBoxLayout, QDialogButtonBox, QPlainTextEdit
+    from PyQt4 import QtCore
 
 
 def convert_str_to_matrix(matrix_str, matrix_shape):
@@ -268,7 +273,7 @@ def parse_float_editors(line_edits, allow_blank=False):
     # Set flag
     return_single_value = False
 
-    if isinstance(line_edits, QtWidgets.QLineEdit) is True:
+    if isinstance(line_edits, QLineEdit) is True:
         line_edit_list = [line_edits]
         return_single_value = True
     elif isinstance(line_edits, list) is True:
@@ -280,7 +285,7 @@ def parse_float_editors(line_edits, allow_blank=False):
     float_list = []
 
     for line_edit in line_edit_list:
-        assert isinstance(line_edit, QtWidgets.QLineEdit)
+        assert isinstance(line_edit, QLineEdit)
         str_value = str(line_edit.text()).strip()
         if len(str_value) == 0 and allow_blank:
             # allow blank and use None
@@ -325,7 +330,7 @@ def parse_integers_editors(line_edits, allow_blank=False):
     # Set flag
     return_single_value = False
 
-    if isinstance(line_edits, QtWidgets.QLineEdit) is True:
+    if isinstance(line_edits, QLineEdit) is True:
         line_edit_list = [line_edits]
         return_single_value = True
     elif isinstance(line_edits, list) is True:
@@ -337,7 +342,7 @@ def parse_integers_editors(line_edits, allow_blank=False):
     integer_list = list()
 
     for line_edit in line_edit_list:
-        assert isinstance(line_edit, QtWidgets.QLineEdit)
+        assert isinstance(line_edit, QLineEdit)
         str_value = str(line_edit.text()).strip()
         if len(str_value) == 0 and allow_blank:
             # allowed empty string
@@ -365,7 +370,7 @@ def parse_integers_editors(line_edits, allow_blank=False):
     return True, integer_list
 
 
-class GetValueDialog(QtWidgets.QDialog):
+class GetValueDialog(QDialog):
     """
     A dialog that gets a single value
     """
@@ -376,10 +381,10 @@ class GetValueDialog(QtWidgets.QDialog):
         """
         super(GetValueDialog, self).__init__(parent)
 
-        layout = QtWidgets.QVBoxLayout(self)
+        layout = QVBoxLayout(self)
 
         # nice widget for editing the date
-        self.value_edit = QtWidgets.QLineEdit(self)
+        self.value_edit = QLineEdit(self)
         layout.addWidget(self.value_edit)
 
         self.setWindowTitle('Workspace Name')
@@ -390,8 +395,8 @@ class GetValueDialog(QtWidgets.QDialog):
         # layout.addWidget(self.datetime)
 
         # OK and Cancel buttons
-        buttons = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel,
-                                         QtCore.Qt.Horizontal, self)
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
+                                   QtCore.Qt.Horizontal, self)
 
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
@@ -432,10 +437,10 @@ def get_value(parent=None):
     result = dialog.exec_()
     value = dialog.get_value()
 
-    return value, result == QtWidgets.QDialog.Accepted
+    return value, result == QDialog.Accepted
 
 
-class DisplayDialog(QtWidgets.QDialog):
+class DisplayDialog(QDialog):
     def __init__(self, parent=None):
         """
 
@@ -443,18 +448,17 @@ class DisplayDialog(QtWidgets.QDialog):
         """
         super(DisplayDialog, self).__init__(parent)
 
-        layout = QtWidgets.QVBoxLayout(self)
+        layout = QVBoxLayout(self)
 
         # nice widget for editing the date
-        self.message_edit = QtWidgets.QPlainTextEdit(self)
+        self.message_edit = QPlainTextEdit(self)
         self.message_edit.setReadOnly(True)
         layout.addWidget(self.message_edit)
 
         self.setWindowTitle('Merged Scans Workspace Names')
 
         # OK and Cancel buttons
-        buttons = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok,
-                                         QtCore.Qt.Horizontal, self)
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok, QtCore.Qt.Horizontal, self)
 
         buttons.accepted.connect(self.accept)
         layout.addWidget(buttons)

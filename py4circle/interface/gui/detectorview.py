@@ -1,8 +1,8 @@
 from six.moves import input
 import numpy as np
 import mplgraphicsview2d
-from matplotlib.widgets import LassoSelector
-from matplotlib.path import Path
+# from matplotlib.widgets import LassoSelector
+# from matplotlib.path import Path
 from matplotlib.widgets import RectangleSelector
 import matplotlib.pyplot as plt
 

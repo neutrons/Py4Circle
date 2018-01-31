@@ -1,5 +1,10 @@
 import numpy as np
-from PyQt5 import QtCore, QtWidgets
+try:
+    from PyQt5 import QtCore
+    from QtWidgets import QMainWindow, QFileDialog, QMessageBox
+except ImportError:
+    from PyQt4 import QtCore
+    from PyQt4.QtGui import QMainWindow, QFileDialog, QMessageBox
 import os
 import gui.MainWindow_ui as MainWindow_ui
 import guiutility as gutil
@@ -7,7 +12,7 @@ import py4circle.lib.polarized_neutron_processor as polarized_neutron_processor
 from py4circle.interface.integrratedroiview import IntegratedROIView
 
 
-class FourCircleMainWindow(QtWidgets.QMainWindow):
+class FourCircleMainWindow(QMainWindow):
     """
     blabla
     """
@@ -39,48 +44,47 @@ class FourCircleMainWindow(QtWidgets.QMainWindow):
         self._init_widgets()
 
         # link
-        self.connect(self.ui.pushButton_setExp, QtCore.SIGNAL('clicked()'),
-                     self.do_set_experiment)
-        self.connect(self.ui.pushButton_applySetup, QtCore.SIGNAL('clicked()'),
-                     self.do_apply_setup)
-        self.connect(self.ui.pushButton_browseWorkDir, QtCore.SIGNAL('clicked()'),
-                     self.do_browse_working_dir)
-        self.connect(self.ui.pushButton_browseLocalDataDir, QtCore.SIGNAL('clicked()'),
-                     self.do_browse_local_spice_data)
-        self.connect(self.ui.pushButton_plotRawPt, QtCore.SIGNAL('clicked()'),
-                     self.do_plot_pt_raw)
+        self.ui.pushButton_setExp.clicked.connect(self.do_set_experiment)
+        self.ui.pushButton_applySetup.clicked.connect(self.do_apply_setup)
+        self.ui.pushButton_browseWorkDir.clicked.connect(self.do_browse_working_dir)
 
-        # about set up ROI for polarized neutron
-        self.connect(self.ui.pushButton_viewSurveyPeak, QtCore.SIGNAL('clicked()'),
-                     self.do_view_survey_peak)
-        self.connect(self.ui.pushButton_prevPtNumber, QtCore.SIGNAL('clicked()'),
-                     self.do_plot_prev_pt_raw)
-        self.connect(self.ui.pushButton_nextPtNumber, QtCore.SIGNAL('clicked()'),
-                     self.do_plot_next_pt_raw)
-
-        # about list all scans
-        self.connect(self.ui.pushButton_survey, QtCore.SIGNAL('clicked()'),
-                     self.do_survey)
-
-        # ROI operation
-        self.connect(self.ui.pushButton_cancelROI, QtCore.SIGNAL('clicked()'),
-                     self.do_remove_roi)
-        self.connect(self.ui.pushButton_integrateROI, QtCore.SIGNAL('clicked()'),
-                     self.do_integrate_rois)
-
-        #: integrate ROI
-        self.connect(self.ui.pushButton_roiUp, QtCore.SIGNAL('clicked()'),
-                     self.do_move_roi_up)
-        self.connect(self.ui.pushButton_roiDown, QtCore.SIGNAL('clicked()'),
-                     self.do_move_roi_down)
-        self.connect(self.ui.pushButton_roiLeft, QtCore.SIGNAL('clicked()'),
-                     self.do_move_roi_left)
-        self.connect(self.ui.pushButton_roiRight, QtCore.SIGNAL('clicked()'),
-                     self.do_move_roi_right)
+        # self.connect(self.ui.pushButton_browseLocalDataDir, QtCore.SIGNAL('clicked()'),
+        #              self.do_browse_local_spice_data)
+        # self.connect(self.ui.pushButton_plotRawPt, QtCore.SIGNAL('clicked()'),
+        #              self.do_plot_pt_raw)
+        #
+        # # about set up ROI for polarized neutron
+        # self.connect(self.ui.pushButton_viewSurveyPeak, QtCore.SIGNAL('clicked()'),
+        #              self.do_view_survey_peak)
+        # self.connect(self.ui.pushButton_prevPtNumber, QtCore.SIGNAL('clicked()'),
+        #              self.do_plot_prev_pt_raw)
+        # self.connect(self.ui.pushButton_nextPtNumber, QtCore.SIGNAL('clicked()'),
+        #              self.do_plot_next_pt_raw)
+        #
+        # # about list all scans
+        # self.connect(self.ui.pushButton_survey, QtCore.SIGNAL('clicked()'),
+        #              self.do_survey)
+        #
+        # # ROI operation
+        # self.connect(self.ui.pushButton_cancelROI, QtCore.SIGNAL('clicked()'),
+        #              self.do_remove_roi)
+        # self.connect(self.ui.pushButton_integrateROI, QtCore.SIGNAL('clicked()'),
+        #              self.do_integrate_rois)
+        #
+        # #: integrate ROI
+        # self.connect(self.ui.pushButton_roiUp, QtCore.SIGNAL('clicked()'),
+        #              self.do_move_roi_up)
+        # self.connect(self.ui.pushButton_roiDown, QtCore.SIGNAL('clicked()'),
+        #              self.do_move_roi_down)
+        # self.connect(self.ui.pushButton_roiLeft, QtCore.SIGNAL('clicked()'),
+        #              self.do_move_roi_left)
+        # self.connect(self.ui.pushButton_roiRight, QtCore.SIGNAL('clicked()'),
+        #              self.do_move_roi_right)
 
         # menu
-        self.connect(self.ui.actionShow_Result_Window, QtCore.SIGNAL('triggered()'),
-                     self.menu_show_result_view)
+        self.ui.actionShow_Result_Window.triggered.connect(self.menu_show_result_view)
+        # self.connect(self.ui.actionShow_Result_Window, QtCore.SIGNAL('triggered()'),
+        #              self.menu_show_result_view)
 
         # list of ROI radio buttons
         self._roiSelectorDict = {-1: self.ui.radioButton_roiAll,
@@ -209,7 +213,7 @@ class FourCircleMainWindow(QtWidgets.QMainWindow):
     def do_browse_local_spice_data(self):
         """ Browse local source SPICE data directory
         """
-        src_spice_dir = str(QtWidgets.QFileDialog.getExistingDirectory(self, 'Get Directory',
+        src_spice_dir = str(QFileDialog.getExistingDirectory(self, 'Get Directory',
                                                                    self._homeSrcDir))
         # Set local data directory to controller
         status, error_message = self._myControl.set_local_data_dir(src_spice_dir)
@@ -227,7 +231,7 @@ class FourCircleMainWindow(QtWidgets.QMainWindow):
         Browse and set up working directory
         :return:
         """
-        work_dir = str(QtWidgets.QFileDialog.getExistingDirectory(self, 'Get Working Directory', self._homeDir))
+        work_dir = str(QFileDialog.getExistingDirectory(self, 'Get Working Directory', self._homeDir))
         status, error_message = self._myControl.set_working_directory(work_dir)
         if status is False:
             self.pop_one_button_dialog(error_message)
@@ -728,7 +732,7 @@ class FourCircleMainWindow(QtWidgets.QMainWindow):
         """
         assert isinstance(message, str), 'Input message %s must a string but not %s.' \
                                          '' % (str(message), type(message))
-        QtWidgets.QMessageBox.information(self, '4-circle Data Reduction', message)
+        QMessageBox.information(self, '4-circle Data Reduction', message)
 
         return
 

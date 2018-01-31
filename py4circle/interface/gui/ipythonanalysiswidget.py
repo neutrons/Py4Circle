@@ -16,7 +16,11 @@ RegexLexer.get_tokens_unprocessed_unpatched = RegexLexer.get_tokens_unprocessed
 from qtconsole.rich_ipython_widget import RichIPythonWidget
 from qtconsole.inprocess import QtInProcessKernelManager
 
-from PyQt5 import QtGui
+try:
+    from PyQt5 import QtGui, QtWidgets
+    from PyQt5.QtWidgets import QApplication
+except ImportError:
+    from PyQt4.QtGui import QApplication
 
 
 def our_run_code(self, code_obj, result=None):
@@ -42,7 +46,7 @@ def our_run_code(self, code_obj, result=None):
         thread = threading.Thread(target=self.ipython_run_code, args=[code_obj])
     thread.start()
     while thread.is_alive():
-        QtGui.QApplication.processEvents()
+        QApplication.processEvents()
     # We don't capture the return value of the ipython_run_code method but as far as I can tell
     #   it doesn't make any difference what's returned
     return 0

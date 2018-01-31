@@ -5,10 +5,13 @@
 ########################################################################
 from ipythonanalysiswidget import IPyAnalysisWidget
 
-from PyQt5 import QtCore, QtGui, QtWidgets
-from MyTableWidget import  NTableWidget
+try:
+    from PyQt5 import QtCore, QtWidgets
+except ImportError:
+    from PyQt4 import QtCore
+    from PyQt4.QtGui import QWidget
+from MyTableWidget import NTableWidget
 from mplgraphicsview1d import MplGraphicsView1D
-
 
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
@@ -17,9 +20,11 @@ except AttributeError:
         return s
 
 
-class WorkspaceViewWidget(QtWidgets.QWidget):
+# TODO/FIXME - class WorkspaceViewWidget does not work here!
+class WorkspaceViewWidget(QWidget):
     """ Class for general-purposed plot window
     """
+
     # reserved command
     Reserved_Command_List = ['plot', 'refresh', 'exit']
 
@@ -29,7 +34,7 @@ class WorkspaceViewWidget(QtWidgets.QWidget):
         import ui_WorkspacesView_ui as ui_WorkspacesView
 
         # call base
-        QtWidgets.QWidget.__init__(self)
+        QWidget.__init__(self)
 
         # Parent & others
         self._myMainWindow = None
