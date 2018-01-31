@@ -179,3 +179,5 @@ Code/Mantid/Vates/VatesSimpleGui/ViewWidgets/inc/MantidVatesSimpleGuiViewWidgets
 
 # Compiled ui file
 ui_*py
+*_ui.py
+*_ui.pyc
