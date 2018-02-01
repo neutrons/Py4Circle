@@ -29,18 +29,10 @@ class IntegratedROIView(QMainWindow):
         # define event handling related with widgets
         self.ui.pushButton_saveResult.clicked.connect(self.do_save_integrated)
         self.ui.pushButton_closeWindow.clicked.connect(self.do_close_window)
-
-        # self.connect(self.ui.pushButton_showExamples, QtCore.SIGNAL('clicked()'),
-        #              self.do_show_examples)
-        #
-        # self.connect(self.ui.pushButton_calculate, QtCore.SIGNAL('clicked()'),
-        #              self.do_calculation)
-        #
-        # self.connect(self.ui.pushButton_plotTableData, QtCore.SIGNAL('clicked()'),
-        #              self.do_plot_data)
-        #
-        # self.connect(self.ui.pushButton_clearImage, QtCore.SIGNAL('clicked()'),
-        #              self.do_clear_plots)
+        self.ui.pushButton_showExamples.clicked.connect(self.do_show_examples)
+        self.ui.pushButton_calculate.clicked.connect(self.do_calculation)
+        self.ui.pushButton_plotTableData.clicked.connect(self.do_plot_data)
+        self.ui.pushButton_clearImage.clicked.connect(self.do_clear_plots)
 
         return
 

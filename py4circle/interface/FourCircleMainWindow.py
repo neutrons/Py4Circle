@@ -48,6 +48,27 @@ class FourCircleMainWindow(QMainWindow):
         self.ui.pushButton_applySetup.clicked.connect(self.do_apply_setup)
         self.ui.pushButton_browseWorkDir.clicked.connect(self.do_browse_working_dir)
 
+        self.ui.pushButton_browseLocalDataDir.clicked.connect(self.do_browse_local_spice_data)
+        self.ui.pushButton_plotRawPt.clicked.connect(self.do_plot_pt_raw)
+
+        # about set up ROI for polarized neutron
+        self.ui.pushButton_viewSurveyPeak.clicked.connect(self.do_view_survey_peak)
+        self.ui.pushButton_prevPtNumber.clicked.connect(self.do_plot_prev_pt_raw)
+        self.ui.pushButton_nextPtNumber.clicked.connect(self.do_plot_next_pt_raw)
+
+        # about list all scans
+        self.ui.pushButton_survey.clicked.connect(self.do_survey)
+
+        # ROI operation
+        self.ui.pushButton_cancelROI.clicked.connect(self.do_remove_roi)
+        self.ui.pushButton_integrateROI.clicked.connect(self.do_integrate_rois)
+
+        # integrate ROI
+        self.ui.pushButton_roiUp.clicked.connect(self.do_move_roi_up)
+        self.ui.pushButton_roiDown.clicked.connect(self.do_move_roi_down)
+        self.ui.pushButton_roiLeft.clicked.connect(self.do_move_roi_left)
+        self.ui.pushButton_roiRight.clicked.connect(self.do_move_roi_right)
+
         # self.connect(self.ui.pushButton_browseLocalDataDir, QtCore.SIGNAL('clicked()'),
         #              self.do_browse_local_spice_data)
         # self.connect(self.ui.pushButton_plotRawPt, QtCore.SIGNAL('clicked()'),
