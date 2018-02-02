@@ -10,17 +10,19 @@ from pygments.lexer import RegexLexer
 # Monkeypatch!
 RegexLexer.get_tokens_unprocessed_unpatched = RegexLexer.get_tokens_unprocessed
 
-#from IPython.qt.console.rich_ipython_widget import RichIPythonWidget
-#from IPython.qt.inprocess import QtInProcessKernelManager
-
-from qtconsole.rich_ipython_widget import RichIPythonWidget
-from qtconsole.inprocess import QtInProcessKernelManager
+try:
+    from qtconsole.rich_ipython_widget import RichIPythonWidget
+    from qtconsole.inprocess import QtInProcessKernelManager
+except ImportError:
+    from IPython.qt.console.rich_ipython_widget import RichIPythonWidget
+    from IPython.qt.inprocess import QtInProcessKernelManager
 
 try:
-    from PyQt5 import QtGui, QtWidgets
     from PyQt5.QtWidgets import QApplication
+    QT_VERSION = 'qt5'
 except ImportError:
     from PyQt4.QtGui import QApplication
+    QT_VERSION = 'qt4'
 
 
 def our_run_code(self, code_obj, result=None):
@@ -70,22 +72,9 @@ class IPyAnalysisWidget(RichIPythonWidget):
         kernel_manager = QtInProcessKernelManager()
         kernel_manager.start_kernel()
         kernel = kernel_manager.kernel
-        kernel.gui = 'qt4'
-        shell = kernel.shell
-
-        # TODO/FIXME - Prototype
-        dir(shell)
-        print dir(shell)
-        print
-        # print shell.__dict__.keys()
-        # print shell.user_variables()
-        # print type(shell.user_variables())
-
-        vdict = dict()
-        vdict['a'] = 1232
-        vdict['b'] = 12.11
-        shell.push(vdict)
-        print '\n----------------\n'
+        # kernel.gui = 'qt4'
+        kernel.gui = QT_VERSION
+        self._kernelShell = kernel.shell
 
         # define Mantid. It is disabled now
         if False:
@@ -101,9 +90,9 @@ class IPyAnalysisWidget(RichIPythonWidget):
         # These 3 lines replace the run_code method of IPython's InteractiveShell class (of which the
         # shell variable is a derived instance) with our method defined above. The original method
         # is renamed so that we can call it from within the our_run_code method.
-        f = shell.run_code
-        shell.run_code = types.MethodType(our_run_code, shell)
-        shell.ipython_run_code = f
+        f = self._kernelShell.run_code
+        self._kernelShell.run_code = types.MethodType(our_run_code, self._kernelShell)
+        self._kernelShell.ipython_run_code = f
 
         kernel_client = kernel_manager.client()
         kernel_client.start_channels()
@@ -113,12 +102,27 @@ class IPyAnalysisWidget(RichIPythonWidget):
 
         self._mainApplication = None
 
-        # self.start_mantid()
-        # TODO/FIXME - Find out why there is such a debug section
-        vdict2 = dict()
-        import numpy
-        vdict2['r1'] = numpy.array([2, 2, 34])
-        shell.push(vdict2)
+        # # test 02:
+        # self.test_set_value()
+
+        return
+
+    def _set_variables_value(self, var_dict):
+        """
+
+        :param var_dict:
+        :return:
+        """
+        assert isinstance(var_dict, dict), 'must be a dict'
+
+        # some prototype script
+        # print shell.__dict__.keys()
+        # print shell.user_variables()
+        # print type(shell.user_variables())...
+
+        print ('[DB..BAT] VAR DICT: {0}'.format(var_dict))
+
+        self._kernelShell.push(var_dict)
 
         return
 
@@ -143,6 +147,34 @@ class IPyAnalysisWidget(RichIPythonWidget):
 
         return script
 
+    def _evaluate_reserved_variables_(self, script):
+        """
+        :param script:
+        :return: a string with reserved method replaced.
+        """
+        import datetime
+
+        # TEST this is a prototype/test land
+        if script.count('GetTime()') > 0:
+            # reserved method GetTime()
+            time = datetime.datetime.now()
+            time_dict = {'_time_': time}
+            self._set_variables_value(time_dict)
+
+            # replace
+            script = script.replace('GetTime()', '_time_')
+
+        elif script.count('MyTime') > 0:
+            # reserved variable name GetTime()
+            time = datetime.datetime.now()
+            time_dict = {'MyTime': time}
+            self._set_variables_value(time_dict)
+
+        else:
+            pass
+
+        return script
+
     def execute(self, source=None, hidden=False, interactive=False):
         """ Override super's execute() in order to emit customized signals to main application
         @param source:
@@ -162,9 +194,16 @@ class IPyAnalysisWidget(RichIPythonWidget):
         # # TODO/FIXME - Debug return
         # return
 
+        # remove Run: and " from input script properly
         script = self._retrieve_non_python_command(script)
 
+        # check whether this is a reserved
+        new_script = self._evaluate_reserved_variables_(script)
+        # if is_reserved_command:
+        #     return
+
         # main application is workspace viewer
+        # print ('[DB...BAT] script: {0} vs new script: {1}'.format(script, new_script))
         is_reserved = False
         if self._mainApplication is not None and self._mainApplication.is_reserved_command(script):
             is_reserved = True
@@ -172,6 +211,8 @@ class IPyAnalysisWidget(RichIPythonWidget):
             script_transformed = script[:]
             script_transformed = script_transformed.replace('"', "'")
             source = '\"Run: %s\"' % script_transformed
+        elif new_script != script:
+            source = new_script
         else:
             exec_message = None
 
@@ -248,3 +289,16 @@ class IPyAnalysisWidget(RichIPythonWidget):
 
         return
 
+    def test_set_value(self):
+        """
+
+        :return:
+        """
+        vdict2 = dict()
+        import numpy
+        vdict2['r1'] = numpy.array([2, 2, 34])
+        self._set_variables_value(vdict2)
+
+        #self._kernelShell.push(vdict2)
+
+        return
