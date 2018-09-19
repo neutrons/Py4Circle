@@ -576,7 +576,7 @@ class NTableWidget(QTableWidget):
 
         if cell_item is not None and cell_widget is None:
             # TableWidgetItem
-            assert isinstance(cell_item, QtGui.QTableWidgetItem)
+            assert isinstance(cell_item, QTableWidgetItem), 'blabla'
             if isinstance(value, float):
                 cell_item.setText(_fromUtf8('%.7f' % value))
             else:

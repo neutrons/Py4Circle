@@ -627,7 +627,11 @@ class FourCircleMainWindow(QMainWindow):
         """
         # check whether this XML file has been loaded
         # TODO blabla
-        raw_det_data = self._myControl.load_spice_xml_file2(exp_no, scan_no, pt_no)
+        try:
+            raw_det_data = self._myControl.load_spice_xml_file2(exp_no, scan_no, pt_no)
+        except RuntimeError as run_err:
+            print ('[ERROR] Unable to load scan {} pt {} due to {}'.format(scan_no, pt_no, run_err))
+            return
         det_shape = raw_det_data.shape
 
         # max_index = np.argmax(raw_det_data)
