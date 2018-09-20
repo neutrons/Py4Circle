@@ -78,7 +78,9 @@ class IntegratedROIView(QMainWindow):
         calculate polarization
         :return:
         """
-        pt_value_dict = self._my_parent.calculate_polarization(self._integrated_counts_dict)
+        polarizers, single_spins = self._my_parent.calculate_polarization(self._integrated_counts_dict)
+        self.ui.tableView_result.set_column_values(4, single_spins)
+        self.ui.tableView_result.set_column_values(5, polarizers, skip=1)
 
         return
 

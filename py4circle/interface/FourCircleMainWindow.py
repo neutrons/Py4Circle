@@ -180,16 +180,20 @@ class FourCircleMainWindow(QMainWindow):
         # print integrated_counts_dict.keys()
         # 0, '0_upper_bkgd', '0_lower-bkgd'
 
-        exp_number = self._expNumber
+        exp_number = int(self.ui.lineEdit_exp.text())
         scan_number = int(self.ui.lineEdit_run.text())
         pt_list = integrated_counts_dict[0][0]
         peak_count_vec = integrated_counts_dict[0][1]
         upper_bkgd_count_vec = integrated_counts_dict['0_upper_bkgd'][1]
         lower_bkgd_count_vec = integrated_counts_dict['0_lower-bkgd'][1]
 
-        self.controller.calculate_polarization(exp_number, scan_number, pt_list, peak_count_vec, upper_bkgd_count_vec, lower_bkgd_count_vec)
+        polarizers, single_spins = \
+            self.controller.calculate_polarization(exp_number, scan_number, pt_list, peak_count_vec,
+                                                   upper_bkgd_count_vec, lower_bkgd_count_vec)
 
-        return
+        self._polarizers = polarizers
+
+        return polarizers, single_spins
 
 
     @property

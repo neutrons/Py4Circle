@@ -117,6 +117,7 @@ class FourCirclePolarizedNeutronProcessor(object):
             raise RuntimeError('Number of Pts. {} is odd... This is wrong! Talk with Huibo'.format(len(pt_list)))
 
         polarization_list = list()
+        single_spin_counts = list()
         for pair_index in range(len(pt_list)/2):
             # check spin up and spin down shall have same pt.
             spin_up_pt = pt_list[2*pair_index]
@@ -134,9 +135,11 @@ class FourCirclePolarizedNeutronProcessor(object):
                                                     lower_bkgd_count_vec[2*pair_index + 1])
             polarization = intensity_spin_up / intensity_spin_down
             polarization_list.append((spin_up_hkl, polarization, 1.0))
+            single_spin_counts.append(intensity_spin_up)
+            single_spin_counts.append(intensity_spin_down)
         # END-FOR
 
-        return polarization_list
+        return polarization_list, single_spin_counts
 
     def retrieve_hkl_from_spice(self, exp_number, scan_number):
         """
@@ -146,11 +149,19 @@ class FourCirclePolarizedNeutronProcessor(object):
         :return:
         """
         spice_table_ws = self._get_spice_workspace(exp_number, scan_number)
-        # table.getColumnNames().index('h')
-        print (type(spice_table_ws))
-        print spice_table_ws.getColumnNames()
+        pt_index = spice_table_ws.getColumnNames().index('Pt')
+        h_index = spice_table_ws.getColumnNames().index('h')
+        k_index = spice_table_ws.getColumnNames().index('k')
+        l_index = spice_table_ws.getColumnNames().index('l')
 
-        return
+        pt_hkl_dict = dict()
+        for row_index in spice_table_ws.rowCount():
+            pt_hkl_dict[spice_table_ws.cell(row_index, pt_index)] = \
+                spice_table_ws.cell(row_index, h_index), spice_table_ws.cell(row_index, k_index), \
+                spice_table_ws.cell(row_index, l_index)
+        # END-FOR
+
+        return pt_hkl_dict
 
     def does_file_exist(self, exp_number, scan_number, pt_number=None):
         """
