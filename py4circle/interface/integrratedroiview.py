@@ -78,6 +78,8 @@ class IntegratedROIView(QMainWindow):
         calculate polarization
         :return:
         """
+        pt_value_dict = self._my_parent.calculate_polarization(self._integrated_counts_dict)
+
         return
 
     def clear_plots(self):
@@ -151,6 +153,7 @@ class IntegratedROIView(QMainWindow):
             return
 
         # save result
+        # TODO FIXME shall be continued
 
         return
 
@@ -223,7 +226,10 @@ class IntegratedROIView(QMainWindow):
         # plot
         for roi_name in integrated_value_dict.keys():
             pt_list, count_vec = integrated_value_dict[roi_name]
-            roi_color = roi_color_dict[roi_name]
+            if roi_name in roi_color_dict:
+                roi_color = roi_color_dict[roi_name]
+            else:
+                roi_color = 'brown'
             self.plot_counts(np.array(pt_list), count_vec, 'Pt', roi_color)
         # END-FOR
 
@@ -269,5 +275,7 @@ class IntegratedROIView(QMainWindow):
                 self.ui.tableView_result.set_integrated_value(pt_number, roi_name, pt_dict[pt_number][roi_name])
             # END-FOR
         # END-FOR
+
+        self._integrated_counts_dict = integrated_value_dict
 
         return

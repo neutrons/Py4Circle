@@ -185,7 +185,7 @@ class NTableWidget(QTableWidget):
         else:
             # Regular cell for int, float and string
             item_i_j = self.item(row_index, col_index)
-            assert isinstance(item_i_j, QtGui.QTableWidgetItem)
+            assert isinstance(item_i_j, QTableWidgetItem)
 
             return_value = str(item_i_j.text())
             if allow_blank and len(return_value.strip()) == 0:
@@ -231,7 +231,7 @@ class NTableWidget(QTableWidget):
             else:
                 # Regular cell
                 item_i_j = self.item(row_index, i_col)
-                assert isinstance(item_i_j, QtGui.QTableWidgetItem)
+                assert isinstance(item_i_j, QTableWidgetItem)
                 value = str(item_i_j.text()).strip()
                 if len(value) > 0:
                     if c_type == 'int':
@@ -505,7 +505,7 @@ class NTableWidget(QTableWidget):
             raise IndexError('Input row number or column number is out of range.')
 
         # Init cell
-        cell_item = QtGui.QTableWidgetItem()
+        cell_item = QTableWidgetItem()
         cell_item.setText(_fromUtf8(str(value)))
         cell_item.setFlags(cell_item.flags() & ~QtCore.Qt.ItemIsEditable)
 

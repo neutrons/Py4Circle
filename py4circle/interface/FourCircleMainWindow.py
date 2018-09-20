@@ -69,6 +69,8 @@ class FourCircleMainWindow(QMainWindow):
         self.ui.pushButton_roiLeft.clicked.connect(self.do_move_roi_left)
         self.ui.pushButton_roiRight.clicked.connect(self.do_move_roi_right)
 
+        self.ui.actionQuit.triggered.connect(self.do_quit)
+
         # self.connect(self.ui.pushButton_browseLocalDataDir, QtCore.SIGNAL('clicked()'),
         #              self.do_browse_local_spice_data)
         # self.connect(self.ui.pushButton_plotRawPt, QtCore.SIGNAL('clicked()'),
@@ -171,6 +173,28 @@ class FourCircleMainWindow(QMainWindow):
             roi_list = [selected]
 
         return roi_list
+
+    def calculate_polarization(self, integrated_counts_dict):
+
+        # TODO FIXME - so far, this is not an elegant solution
+        # print integrated_counts_dict.keys()
+        # 0, '0_upper_bkgd', '0_lower-bkgd'
+
+        exp_number = self._expNumber
+        scan_number = int(self.ui.lineEdit_run.text())
+        pt_list = integrated_counts_dict[0][0]
+        peak_count_vec = integrated_counts_dict[0][1]
+        upper_bkgd_count_vec = integrated_counts_dict['0_upper_bkgd'][1]
+        lower_bkgd_count_vec = integrated_counts_dict['0_lower-bkgd'][1]
+
+        self.controller.calculate_polarization(exp_number, scan_number, pt_list, peak_count_vec, upper_bkgd_count_vec, lower_bkgd_count_vec)
+
+        return
+
+
+    @property
+    def controller(self):
+        return self._myControl
 
     def do_apply_setup(self):
         """
@@ -489,6 +513,9 @@ class FourCircleMainWindow(QMainWindow):
 
         return
 
+    def do_quit(self):
+        self.close()
+
     def do_remove_roi(self):
         """
         remove a selected ROI (rectangular)
@@ -679,7 +706,9 @@ class FourCircleMainWindow(QMainWindow):
 
         self.ui.graphicsView_detector2dPlot.add_2d_plot(raw_det_data, x_min=0, x_max=det_shape[0], y_min=0,
                                                         y_max=det_shape[1],
-                                                        hold_prev_image=False, plot_type='image')
+                                                        hold_prev_image=False, plot_type='image',
+                                                        title='Exp {} Scan {} Pt {}'
+                                                              ''.format(exp_no, scan_no, pt_no))
 
         return
 

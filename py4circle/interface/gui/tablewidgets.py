@@ -104,7 +104,7 @@ class IntegratedCountsTable(tableBase.NTableWidget):
             if col_index == self._calculatedColumnIndex:
                 allow_blank = True
             else:
-                allow_blank =  False
+                allow_blank = False
             value_dict[col_name] = self.get_cell_value(row_number, col_index, allow_blank)
         # END-FOR
 

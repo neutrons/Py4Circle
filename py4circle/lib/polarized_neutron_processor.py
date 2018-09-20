@@ -146,6 +146,7 @@ class FourCirclePolarizedNeutronProcessor(object):
         :return:
         """
         spice_table_ws = self._get_spice_workspace(exp_number, scan_number)
+        # table.getColumnNames().index('h')
         print (type(spice_table_ws))
         print spice_table_ws.getColumnNames()
 

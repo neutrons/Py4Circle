@@ -115,7 +115,7 @@ class MplGraphicsView2D(QWidget):
         return
 
     def add_2d_plot(self, array2d, x_min, x_max, y_min, y_max, hold_prev_image=True, y_tick_label=None,
-                    plot_type='image'):
+                    plot_type='image', title=None):
         """
         Add a 2D image to canvas
         :param array2d: numpy 2D array
@@ -125,6 +125,7 @@ class MplGraphicsView2D(QWidget):
         :param y_max:
         :param hold_prev_image:
         :param y_tick_label:
+        :param title:
         :return:
         """
         # obsoleted: self._myCanvas.addPlot2D(array2d, x_min, x_max, y_min, y_max, hold_prev_image, y_tick_label)
@@ -141,7 +142,8 @@ class MplGraphicsView2D(QWidget):
 
         self._hasImage = True
 
-        self._myCanvas.set_title('Whatever You want to Set', color='red')
+        if title is not None:
+            self._myCanvas.set_title(title, color='red')
 
         return
 
@@ -848,23 +850,23 @@ class Qt4Mpl2DCanvas(FigureCanvas):
 
         return
 
-    # def set_title(self, title, color):
-    #     """
-    #     set the tile to an axis
-    #     :param title:
-    #     :param color
-    #     :return:
-    #     """
-    #     # check input
-    #     assert isinstance(title, str), 'Title must be a string but not a {0}.'.format(type(title))
-    #     assert isinstance(color, str), 'Color must be a string but not a {0}.'.format(type(color))
-    #
-    #     print '[DB...BAT] Set {0} in color {1} as the figure\'s title.'.format(title, color)
-    #     self.set_title(title, color)
-    #
-    #     self.draw()
-    #
-    #     return
+    def set_title(self, title, color):
+        """
+        set the tile to an axis
+        :param title:
+        :param color
+        :return:
+        """
+        # check input
+        assert isinstance(title, str), 'Title must be a string but not a {0}.'.format(type(title))
+        assert isinstance(color, str), 'Color must be a string but not a {0}.'.format(type(color))
+    
+        print '[DB...BAT] Set {0} in color {1} as the figure\'s title.'.format(title, color)
+        self.axes.set_title(title)
+    
+        self.draw()
+    
+        return
 
     def remove_plot_1d(self, plot_key):
         """ Remove the line with its index as key
