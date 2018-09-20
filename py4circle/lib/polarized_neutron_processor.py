@@ -100,6 +100,57 @@ class FourCirclePolarizedNeutronProcessor(object):
 
         return ws
 
+    def calculate_polarization(self, exp_number, scan_number, pt_list, peak_count_vec, upper_bkgd_count_vec, lower_bkgd_count_vec):
+        """ calculate polarization
+        :param exp_number:
+        :param scan_number:
+        :param pt_list:
+        :param peak_count_vec:
+        :param upper_bkgd_count_vec:
+        :param lower_bkgd_count_vec:
+        :return:
+        """
+        pt_hkl_dict = self.retrieve_hkl_from_spice(exp_number, scan_number)
+
+        # TODO FIXME - Pt number is all odd due to SPICE bug!
+        if len(pt_list) % 2 == 1:
+            raise RuntimeError('Number of Pts. {} is odd... This is wrong! Talk with Huibo'.format(len(pt_list)))
+
+        polarization_list = list()
+        for pair_index in range(len(pt_list)/2):
+            # check spin up and spin down shall have same pt.
+            spin_up_pt = pt_list[2*pair_index]
+            spin_down_pt = pt_list[2*pair_index + 1]
+            spin_up_hkl = pt_hkl_dict[spin_up_pt]
+            spin_down_hkl = pt_hkl_dict[spin_down_pt]
+            if spin_up_hkl != spin_down_hkl:
+                raise RuntimeError('For pt {} and {}, HKL {} and {} shall be same!'
+                                   ''.format(spin_up_pt, spin_down_pt, spin_up_hkl, spin_down_hkl))
+            # calculate spin up
+            intensity_spin_up = \
+                peak_count_vec[2*pair_index] - (upper_bkgd_count_vec[2*pair_index] + lower_bkgd_count_vec[2*pair_index])
+            intensity_spin_down = \
+                peak_count_vec[2*pair_index + 1] - (upper_bkgd_count_vec[2*pair_index + 1] +
+                                                    lower_bkgd_count_vec[2*pair_index + 1])
+            polarization = intensity_spin_up / intensity_spin_down
+            polarization_list.append((spin_up_hkl, polarization, 1.0))
+        # END-FOR
+
+        return polarization_list
+
+    def retrieve_hkl_from_spice(self, exp_number, scan_number):
+        """
+        get HKL of each pt number
+        :param exp_number:
+        :param scan_number:
+        :return:
+        """
+        spice_table_ws = self._get_spice_workspace(exp_number, scan_number)
+        print (type(spice_table_ws))
+        print spice_table_ws.getColumnNames()
+
+        return
+
     def does_file_exist(self, exp_number, scan_number, pt_number=None):
         """
         Check whether data file for a scan or pt number exists on the
@@ -342,8 +393,9 @@ class FourCirclePolarizedNeutronProcessor(object):
             min_col = int(roi_range[0][1])
             max_row = int(roi_range[1][0])
             max_col = int(roi_range[1][1])
-        except IndexError as index_rror:
-            raise RuntimeError('Input ROI {0} does not have 2 x 2 elements.'.format(roi_range))
+        except IndexError as index_err:
+            raise RuntimeError('Input ROI {0} does not have 2 x 2 elements. FYI: {1}'
+                               ''.format(roi_range, index_err))
 
         # load all Pts. in this scan and do integration (simple summing)
         status, pt_number_list = self.get_pt_numbers(exp_number, scan_number)

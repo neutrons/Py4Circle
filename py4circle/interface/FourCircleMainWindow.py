@@ -263,12 +263,14 @@ class FourCircleMainWindow(QMainWindow):
 
     def do_integrate_rois(self):
         """
-        Integrate ROIs for user
+        Integrate ROIs for user of a scan:
         :return:
         """
         # get all the ROI's region
         roi_dimension_dict = self.ui.graphicsView_detector2dPlot.get_roi_dimensions()
         roi_color_dict = self.ui.graphicsView_detector2dPlot.get_roi_colors()
+
+        print ('[INFO] ROI to integrate: {}'.format(roi_dimension_dict.keys()))
 
         # integrate
         integrated_value_dict = dict()
@@ -292,29 +294,52 @@ class FourCircleMainWindow(QMainWindow):
 
             pt_list, counts_vector = self._myControl.integrate_roi(int(self.ui.lineEdit_exp.text()),
                                                                    int(self.ui.lineEdit_run.text()),
-                                                                    matrix_range)
+                                                                   matrix_range)
+            print ('[DB...BAT] pt list type: {}, counts vector type: {}'.format(type(pt_list), counts_vector))
+
+            half_row = (max_row - min_row) / 2
+
+            # background upper and background lower
+            upper_bkgd_matrix_range = (max_row, min_col), (max_row + half_row, max_col)
+            pt_list, upper_bkgd_vec = self._myControl.integrate_roi(int(self.ui.lineEdit_exp.text()),
+                                                                    int(self.ui.lineEdit_run.text()),
+                                                                    upper_bkgd_matrix_range)
+
+            lower_bkgd_matrix_range = (min_row - half_row, min_col), (min_row, max_col)
+            pt_list, lower_bkgd_vec = self._myControl.integrate_roi(int(self.ui.lineEdit_exp.text()),
+                                                                    int(self.ui.lineEdit_run.text()),
+                                                                    lower_bkgd_matrix_range)
+
             integrated_value_dict[roi_name] = pt_list, counts_vector
 
-            # FIXME - Remove this part after testing is over
-            counts_matrix, count_sum = self._myControl.mask_roi(int(self.ui.lineEdit_exp.text()),
-                                                                int(self.ui.lineEdit_run.text()),
-                                                                int(self.ui.lineEdit_rawDataPtNo.text()),
-                                                                matrix_range)
-            det_shape = counts_matrix.shape
-            self.ui.graphicsView_detector2dPlot.add_2d_plot(counts_matrix, x_min=0, x_max=det_shape[0], y_min=0,
-                                                            y_max=det_shape[1],
-                                                            hold_prev_image=False, plot_type='image')
-            self.ui.plainTextEdit_rawDataInformation.setPlainText('Pixel Range: {0}; Matirix Range: {1}; Counts = {2}'
-                                                                  ''.format(pixel_range, matrix_range, count_sum))
-            # END-OF-FIXME
-
             # plotting
+        # END-FOR
 
         # create a dialog/window for the result
         if self._integratedViewWindow is None:
             self._integratedViewWindow = IntegratedROIView(self)
         self._integratedViewWindow.show()
         self._integratedViewWindow.set_integrated_value(integrated_value_dict, roi_color_dict)
+
+        return
+
+    def do_review_roi(self):
+        """
+        plot ROI on each measurement (pt. number) and export to PNG in order to make movie
+        :return:
+        """
+        # FIXME - Remove this part after testing is over
+        counts_matrix, count_sum = self._myControl.mask_roi(int(self.ui.lineEdit_exp.text()),
+                                                            int(self.ui.lineEdit_run.text()),
+                                                            int(self.ui.lineEdit_rawDataPtNo.text()),
+                                                            matrix_range)
+        det_shape = counts_matrix.shape
+        self.ui.graphicsView_detector2dPlot.add_2d_plot(counts_matrix, x_min=0, x_max=det_shape[0], y_min=0,
+                                                        y_max=det_shape[1],
+                                                        hold_prev_image=False, plot_type='image')
+        self.ui.plainTextEdit_rawDataInformation.setPlainText('Pixel Range: {0}; Matirix Range: {1}; Counts = {2}'
+                                                              ''.format(pixel_range, matrix_range, count_sum))
+        # END-OF-FIXME
 
         return
 
