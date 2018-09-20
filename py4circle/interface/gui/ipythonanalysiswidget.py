@@ -19,7 +19,7 @@ except ImportError:
 
 try:
     from PyQt5.QtWidgets import QApplication
-    QT_VERSION = 'qt5'
+    QT_VERSION = 'qt'
 except ImportError:
     from PyQt4.QtGui import QApplication
     QT_VERSION = 'qt4'
