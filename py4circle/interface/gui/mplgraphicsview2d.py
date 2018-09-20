@@ -331,6 +331,9 @@ class MplGraphicsView2D(QWidget):
 
         return
 
+    def save_image(self, file_name):
+        self._myCanvas.fig.savefig(file_name)
+
     def set_indicator_position(self, line_id, pos_x, pos_y):
         """ Set the indicator to new position
         :param line_id: indicator ID

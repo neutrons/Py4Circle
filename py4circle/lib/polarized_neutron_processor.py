@@ -736,3 +736,7 @@ class FourCirclePolarizedNeutronProcessor(object):
         self._scanSummaryList = scan_sum_list
 
         return True, scan_sum_list, error_message
+
+    @property
+    def working_dir(self):
+        return self._workDir

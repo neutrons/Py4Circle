@@ -52,6 +52,7 @@ class FourCircleMainWindow(QMainWindow):
 
         self.ui.pushButton_browseLocalDataDir.clicked.connect(self.do_browse_local_spice_data)
         self.ui.pushButton_plotRawPt.clicked.connect(self.do_plot_pt_raw)
+        self.ui.pushButton_exportMovie.clicked.connect(self.do_export_movie)
 
         # about set up ROI for polarized neutron
         self.ui.pushButton_viewSurveyPeak.clicked.connect(self.do_view_survey_peak)
@@ -127,7 +128,7 @@ class FourCircleMainWindow(QMainWindow):
         self._pixelXYSize = 256
 
         # other class variables
-        self._homeSrcDir = '/tmp'
+        self._homeSrcDir = ''
 
         return
 
@@ -141,11 +142,13 @@ class FourCircleMainWindow(QMainWindow):
         self.ui.tableView_generalTableView.setup()
 
         # debug setup ----
-        self.ui.lineEdit_exp.setText('640')
-        self.ui.lineEdit_workDir.setText('/tmp')
-        self.ui.lineEdit_surveyStartPt.setText('10')
+        self.ui.lineEdit_exp.setText('715')
+        self.ui.lineEdit_workDir.setText('/SNS/users/wzz/Projects/HB3A/Exp715')
+        self.ui.lineEdit_surveyStartPt.setText('1')
         self.ui.lineEdit_surveyEndPt.setText('300')
         self.ui.lineEdit_numSurveyOutput.setText('50')
+        self.ui.lineEdit_run.setText('73')
+        self.ui.lineEdit_rawDataPtNo.setText('1')
 
         self.ui.label_14.setStyleSheet('color: red')
         self.ui.radioButton_roiNo1.setStyleSheet('color: red')
@@ -288,6 +291,29 @@ class FourCircleMainWindow(QMainWindow):
             self.pop_one_button_dialog(error_message)
         else:
             self.ui.lineEdit_workDir.setText(work_dir)
+
+        return
+
+    def do_export_movie(self):
+        """
+
+        @return:
+        """
+        self.ui.lineEdit_rawDataPtNo.setText('0')
+        scan_number = str(self.ui.lineEdit_run.text())
+
+        continue_plot = True
+        counts = 0
+        while continue_plot and counts < 1000:
+            continue_plot = self.do_plot_next_pt_raw()
+            file_name = os.path.join(self._myControl.working_dir,
+                                     'scan{}_{:04}.png'
+                                     ''.format(scan_number, int(self.ui.lineEdit_rawDataPtNo.text())))
+            print ('[INFO] Save image for {} to {}'.format(self.ui.lineEdit_rawDataPtNo.text(),
+                                                           file_name))
+            self.ui.graphicsView_detector2dPlot.save_image(file_name)
+            counts += 1
+        # END-WHILE
 
         return
 
@@ -467,9 +493,13 @@ class FourCircleMainWindow(QMainWindow):
             self.ui.lineEdit_rawDataPtNo.setText('%d' % pt_no)
 
         # Plot
-        self._plot_raw_xml_2d(exp_no, scan_no, pt_no)
+        is_plotted = self._plot_raw_xml_2d(exp_no, scan_no, pt_no)
+        if is_plotted is False and pt_no % 2 == 1:
+            # out of boundary: stop and rewind
+            self.ui.lineEdit_rawDataPtNo.setText('{}'.format(pt_no-2))
+            return False
 
-        return
+        return True
 
     def do_plot_prev_pt_raw(self):
         """ Plot the Pt.
@@ -701,7 +731,7 @@ class FourCircleMainWindow(QMainWindow):
             raw_det_data = self._myControl.load_spice_xml_file2(exp_no, scan_no, pt_no)
         except RuntimeError as run_err:
             print ('[ERROR] Unable to load scan {} pt {} due to {}'.format(scan_no, pt_no, run_err))
-            return
+            return False
         det_shape = raw_det_data.shape
 
         # max_index = np.argmax(raw_det_data)
