@@ -141,6 +141,8 @@ class MplGraphicsView2D(QWidget):
 
         self._hasImage = True
 
+        self._myCanvas.set_title('Whatever You want to Set', color='red')
+
         return
 
     def has_image_on_canvas(self):
@@ -846,23 +848,23 @@ class Qt4Mpl2DCanvas(FigureCanvas):
 
         return
 
-    def set_title(self, title, color):
-        """
-        set the tile to an axis
-        :param title:
-        :param color
-        :return:
-        """
-        # check input
-        assert isinstance(title, str), 'Title must be a string but not a {0}.'.format(type(title))
-        assert isinstance(color, str), 'Color must be a string but not a {0}.'.format(type(color))
-
-        print '[DB...BAT] Set {0} in color {1} as the figure\'s title.'.format(title, color)
-        self.setWindowTitle(title)
-
-        self.draw()
-
-        return
+    # def set_title(self, title, color):
+    #     """
+    #     set the tile to an axis
+    #     :param title:
+    #     :param color
+    #     :return:
+    #     """
+    #     # check input
+    #     assert isinstance(title, str), 'Title must be a string but not a {0}.'.format(type(title))
+    #     assert isinstance(color, str), 'Color must be a string but not a {0}.'.format(type(color))
+    #
+    #     print '[DB...BAT] Set {0} in color {1} as the figure\'s title.'.format(title, color)
+    #     self.set_title(title, color)
+    #
+    #     self.draw()
+    #
+    #     return
 
     def remove_plot_1d(self, plot_key):
         """ Remove the line with its index as key

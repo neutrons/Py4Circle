@@ -282,7 +282,7 @@ class FourCircleMainWindow(QMainWindow):
             roi_names = roi_dimension_dict.keys()
 
             # add backgrounds' ROI
-            for roi_name in roi_dimension_dict:
+            for roi_name in roi_names:
                 # dimension
                 left_bottom_x = roi_dimension_dict[roi_name][0]
                 left_bottom_y = roi_dimension_dict[roi_name][1]
