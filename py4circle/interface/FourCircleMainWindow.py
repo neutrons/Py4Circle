@@ -275,6 +275,32 @@ class FourCircleMainWindow(QMainWindow):
         # integrate
         integrated_value_dict = dict()
 
+        # create background ROI
+        AUTOBACKGROND = True   # FIXME : shall be a user's choice!
+        if AUTOBACKGROND is True:
+            # get original ROIs to keep
+            roi_names = roi_dimension_dict.keys()
+
+            # add backgrounds' ROI
+            for roi_name in roi_dimension_dict:
+                # dimension
+                left_bottom_x = roi_dimension_dict[roi_name][0]
+                left_bottom_y = roi_dimension_dict[roi_name][1]
+                width = roi_dimension_dict[roi_name][2]
+                height = roi_dimension_dict[roi_name][3]
+
+                # add upper background
+                upper_bkgd_left_bottom_y = left_bottom_y + height
+                upper_bkgd_name = '{}_upper_bkgd'.format(roi_name)
+                roi_dimension_dict[upper_bkgd_name] = [left_bottom_x, upper_bkgd_left_bottom_y, width, height/2]
+
+                # add lower background
+                lower_bkgd_left_bottom_y = left_bottom_y - height/2
+                lower_bkgd_name = '{}_lower-bkgd'.format(roi_name)
+                roi_dimension_dict[lower_bkgd_name] = [left_bottom_x, lower_bkgd_left_bottom_y, width, height/2]
+            # END-FOR
+        # END-IF
+
         for roi_name in roi_dimension_dict:
             # convert the ROI/rectangular dimension to pixels
             left_bottom_x = roi_dimension_dict[roi_name][0]
@@ -295,21 +321,7 @@ class FourCircleMainWindow(QMainWindow):
             pt_list, counts_vector = self._myControl.integrate_roi(int(self.ui.lineEdit_exp.text()),
                                                                    int(self.ui.lineEdit_run.text()),
                                                                    matrix_range)
-            print ('[DB...BAT] pt list type: {}, counts vector type: {}'.format(type(pt_list), counts_vector))
-
-            half_row = (max_row - min_row) / 2
-
-            # background upper and background lower
-            upper_bkgd_matrix_range = (max_row, min_col), (max_row + half_row, max_col)
-            pt_list, upper_bkgd_vec = self._myControl.integrate_roi(int(self.ui.lineEdit_exp.text()),
-                                                                    int(self.ui.lineEdit_run.text()),
-                                                                    upper_bkgd_matrix_range)
-
-            lower_bkgd_matrix_range = (min_row - half_row, min_col), (min_row, max_col)
-            pt_list, lower_bkgd_vec = self._myControl.integrate_roi(int(self.ui.lineEdit_exp.text()),
-                                                                    int(self.ui.lineEdit_run.text()),
-                                                                    lower_bkgd_matrix_range)
-
+            print ('[DB...BAT] pt list type: {}, counts vector type: {}'.format(type(pt_list), type(counts_vector)))
             integrated_value_dict[roi_name] = pt_list, counts_vector
 
             # plotting

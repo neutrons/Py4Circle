@@ -18,6 +18,7 @@ class IntegratedROIView(QMainWindow):
         :param parent:
         """
         super(IntegratedROIView, self).__init__(parent)
+        self._my_parent = parent
 
         # set up UI
         self.ui = gui.ResultViewWindow_ui.Ui_MainWindow()
@@ -33,6 +34,10 @@ class IntegratedROIView(QMainWindow):
         self.ui.pushButton_calculate.clicked.connect(self.do_calculation)
         self.ui.pushButton_plotTableData.clicked.connect(self.do_plot_data)
         self.ui.pushButton_clearImage.clicked.connect(self.do_clear_plots)
+
+        self.ui.actionExport_Polarization.triggered.connect(self.do_export_polarization)
+        self.ui.actionQuit.triggered.connect(self.do_close_window)
+        self.ui.actionCalculate_Polarization.triggered.connect(self.do_calculate_polarization)
 
         return
 
@@ -68,6 +73,13 @@ class IntegratedROIView(QMainWindow):
 
         return _cal_value
 
+    def do_calculate_polarization(self):
+        """
+        calculate polarization
+        :return:
+        """
+        return
+
     def clear_plots(self):
         """
         clear the plotted lines
@@ -99,6 +111,13 @@ class IntegratedROIView(QMainWindow):
         self.close()
 
         return
+
+    def do_export_polarization(self):
+        """
+        export polarization
+        :return:
+        """
+
 
     def do_plot_data(self):
         """
