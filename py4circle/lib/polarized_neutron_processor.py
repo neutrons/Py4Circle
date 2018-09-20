@@ -114,7 +114,8 @@ class FourCirclePolarizedNeutronProcessor(object):
 
         # TODO FIXME - Pt number is all odd due to SPICE bug!
         if len(pt_list) % 2 == 1:
-            raise RuntimeError('Number of Pts. {} is odd... This is wrong! Talk with Huibo'.format(len(pt_list)))
+            raise RuntimeError('Number of Pts. = {} is odd... This is wrong! Talk with Huibo'
+                               '. \nFYI: Pt list: {}'.format(len(pt_list), pt_list))
 
         polarization_list = list()
         single_spin_counts = list()
@@ -149,13 +150,13 @@ class FourCirclePolarizedNeutronProcessor(object):
         :return:
         """
         spice_table_ws = self._get_spice_workspace(exp_number, scan_number)
-        pt_index = spice_table_ws.getColumnNames().index('Pt')
+        pt_index = spice_table_ws.getColumnNames().index('Pt.')
         h_index = spice_table_ws.getColumnNames().index('h')
         k_index = spice_table_ws.getColumnNames().index('k')
         l_index = spice_table_ws.getColumnNames().index('l')
 
         pt_hkl_dict = dict()
-        for row_index in spice_table_ws.rowCount():
+        for row_index in range(spice_table_ws.rowCount()):
             pt_hkl_dict[spice_table_ws.cell(row_index, pt_index)] = \
                 spice_table_ws.cell(row_index, h_index), spice_table_ws.cell(row_index, k_index), \
                 spice_table_ws.cell(row_index, l_index)
