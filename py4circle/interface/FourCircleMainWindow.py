@@ -6,7 +6,9 @@ except ImportError:
     from PyQt4 import QtCore
     from PyQt4.QtGui import QMainWindow, QFileDialog, QMessageBox
 import os
-import gui.MainWindow_ui as MainWindow_ui
+# import gui.MainWindow_ui as MainWindow_ui
+import gui.ui_MainWindow as MainWindow_ui
+
 import guiutility as gutil
 import py4circle.lib.polarized_neutron_processor as polarized_neutron_processor
 from py4circle.interface.integrratedroiview import IntegratedROIView

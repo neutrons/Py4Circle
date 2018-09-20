@@ -4,7 +4,9 @@ try:
 except ImportError:
     from PyQt4 import QtCore
     from PyQt4.QtGui import QMainWindow, QFileDialog, QMessageBox
-import gui.ResultViewWindow_ui
+# import gui.ResultViewWindow_ui
+from gui.ui_ResultViewWindow import Ui_MainWindow as ResultView_UI_MainWindow
+
 import numpy as np
 
 
@@ -21,7 +23,7 @@ class IntegratedROIView(QMainWindow):
         self._my_parent = parent
 
         # set up UI
-        self.ui = gui.ResultViewWindow_ui.Ui_MainWindow()
+        self.ui = ResultView_UI_MainWindow()
         self.ui.setupUi(self)
 
         # initialize widget

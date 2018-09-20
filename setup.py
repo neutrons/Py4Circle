@@ -29,9 +29,21 @@ if sys.argv[-1] == 'pyuic':
             if os.stat(inname).st_mtime < os.stat(outname).st_mtime:
                 continue
         print("Converting '%s' to '%s'" % (inname, outname))
-        command = "pyuic%d %s -o %s"  % (pyui_ver, inname, outname)
+
+        try:
+            # check the key package to determine whether the build shall be Qt4 or Qt5
+            import PyQt5
+            from qtconsole.inprocess import QtInProcessKernelManager
+            ver = 5
+            print ('Qt5 is used!')
+        except ImportError:
+            ver = 4
+            print ('Qt4 is used!')
+
+        command = "pyuic%d %s -o %s" % (ver, inname, outname)
         os.system(command)
         done += 1
+
     if not done:
         print("Did not convert any '.ui' files")
 
