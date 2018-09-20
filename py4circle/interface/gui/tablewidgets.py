@@ -384,6 +384,8 @@ class ScanListTable(tableBase.NTableWidget):
         assert num_rows > 0
         assert len(self._myScanSummaryList) > 0
 
+        print ('Number of rows = {}; scan summary list = {}'.format(num_rows, len(self._myScanSummaryList)))
+
         for i_ref in range(min(num_rows, len(self._myScanSummaryList))):
             # get counts
             scan_summary = self._myScanSummaryList[i_ref]

@@ -5,9 +5,9 @@ from six.moves import range
 import csv
 try:
     from PyQt5 import QtGui, QtCore
-    from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem
+    from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QCheckBox
 except ImportError:
-    from PyQt4.QtGui import QTableWidget, QTableWidgetItem
+    from PyQt4.QtGui import QTableWidget, QTableWidgetItem, QCheckBox
     from PyQt4 import QtCore
 
 try:
@@ -179,7 +179,7 @@ class NTableWidget(QTableWidget):
         if cell_data_type == 'checkbox':
             # Check box
             cell_i_j = self.cellWidget(row_index, col_index)
-            assert isinstance(cell_i_j, QtGui.QCheckBox)
+            assert isinstance(cell_i_j, QCheckBox)
 
             return_value = cell_i_j.isChecked()
         else:
@@ -225,7 +225,7 @@ class NTableWidget(QTableWidget):
             if c_type == 'checkbox':
                 # Check box
                 cell_i_j = self.cellWidget(row_index, i_col)
-                assert isinstance(cell_i_j, QtGui.QCheckBox)
+                assert isinstance(cell_i_j, QCheckBox)
                 is_checked = cell_i_j.isChecked()
                 ret_list.append(is_checked)
             else:
@@ -457,7 +457,7 @@ class NTableWidget(QTableWidget):
             self.cellWidget(row, col).setChecked(state)
         else:
             # case to add checkbox
-            checkbox = QtGui.QCheckBox()
+            checkbox = QCheckBox()
             checkbox.setText('')
             checkbox.setChecked(state)
 
@@ -583,7 +583,7 @@ class NTableWidget(QTableWidget):
                 cell_item.setText(_fromUtf8(str(value)))
         elif cell_item is None and cell_widget is not None:
             # TableCellWidget
-            if isinstance(cell_widget, QtGui.QCheckBox) is True:
+            if isinstance(cell_widget, QCheckBox) is True:
                 cell_widget.setChecked(value)
             else:
                 raise TypeError('Cell of type %s is not supported.' % str(type(cell_item)))
