@@ -131,6 +131,25 @@ class IntegratedCountsTable(tableBase.NTableWidget):
 
         return
 
+    def set_column_values(self, col_index, value_vec, skip=0):
+        """
+        set column values
+        :param col_index:
+        :param value_vec:
+        :param skip:
+        :return:
+        """
+        for index in range(len(value_vec)):
+            row_index = index * (1 + skip)
+            if row_index >= self.rowCount():
+                break
+            else:
+                self.update_cell_value(row_index, col_index, value_vec[index])
+
+        # END-FOR
+
+        return
+
     def set_integrated_value(self, pt_number, roi_name, value):
         """
         set an integrated value to a pt by its ROI name
