@@ -8,6 +8,7 @@ except ImportError:
 import os
 # import gui.MainWindow_ui as MainWindow_ui
 import gui.ui_MainWindow as MainWindow_ui
+import math
 
 import guiutility as gutil
 import py4circle.lib.polarized_neutron_processor as polarized_neutron_processor
@@ -190,16 +191,31 @@ class FourCircleMainWindow(QMainWindow):
         pt_list = integrated_counts_dict[0][0]
         peak_count_vec = integrated_counts_dict[0][1]
         upper_bkgd_count_vec = integrated_counts_dict['0_upper_bkgd'][1]
-        lower_bkgd_count_vec = integrated_counts_dict['0_lower-bkgd'][1]
+        lower_bkgd_count_vec = integrated_counts_dict['0_lower_bkgd'][1]
 
+        # vertical
         polarizers, single_spins = \
             self.controller.calculate_polarization(exp_number, scan_number, pt_list, peak_count_vec,
-                                                   upper_bkgd_count_vec, lower_bkgd_count_vec)
+                                                   upper_bkgd_count_vec, lower_bkgd_count_vec, flag='vertical')
+
+        # horizontal
+        left_bkgd_count_vec = integrated_counts_dict['0_left_bkgd'][1]
+        right_bkgd_count_vec = integrated_counts_dict['0_right_bkgd'][1]
+        left_right_polarizers, left_right_single_spins = \
+            self.controller.calculate_polarization(exp_number, scan_number, pt_list, peak_count_vec,
+                                                   left_bkgd_count_vec, right_bkgd_count_vec, flag='horizontal')
+
+        # encircle
+        outer_bkgd_count_vec = integrated_counts_dict['0_encircle'][1]
+        outer_bkgd_count_vec = outer_bkgd_count_vec - peak_count_vec
+        zero_count_vec = np.zeros(shape=outer_bkgd_count_vec.shape, dtype=outer_bkgd_count_vec.dtype)
+        encircle_polarizers, encircle_single_spins = \
+            self.controller.calculate_polarization(exp_number, scan_number, pt_list, peak_count_vec,
+                                                   outer_bkgd_count_vec, zero_count_vec, flag='outer')
 
         self._polarizers = polarizers
 
-        return polarizers, single_spins
-
+        return encircle_polarizers, encircle_single_spins
 
     @property
     def controller(self):
@@ -352,8 +368,28 @@ class FourCircleMainWindow(QMainWindow):
 
                 # add lower background
                 lower_bkgd_left_bottom_y = left_bottom_y - height/2
-                lower_bkgd_name = '{}_lower-bkgd'.format(roi_name)
+                lower_bkgd_name = '{}_lower_bkgd'.format(roi_name)
                 roi_dimension_dict[lower_bkgd_name] = [left_bottom_x, lower_bkgd_left_bottom_y, width, height/2]
+
+                # add left background
+                left_bkgd_left_bottom_x = left_bottom_x - width/2
+                left_bkgd_name = '{}_left_bkgd'.format(roi_name)
+                roi_dimension_dict[left_bkgd_name] = [left_bkgd_left_bottom_x, left_bottom_y, width/2, height]
+
+                # add right background
+                right_bkgd_left_bottom_x = left_bottom_x + width
+                right_bkgd_name = '{}_right_bkgd'.format(roi_name)
+                roi_dimension_dict[right_bkgd_name] = [right_bkgd_left_bottom_x, left_bottom_y, width/2, height]
+
+                # add encircled background
+                new_width = int(width * math.sqrt(2.))
+                new_height = int(height*math.sqrt(2.))
+                new_bkgd_left_bottom_x = left_bottom_x - (new_width - width)/2
+                new_bkgd_left_bottom_y = left_bottom_y - (new_height - height)/2
+                encircle_bkgd_name = '{}_encircle'.format(roi_name)
+                roi_dimension_dict[encircle_bkgd_name] = [new_bkgd_left_bottom_x, new_bkgd_left_bottom_y,
+                                                          new_width, new_height]
+
             # END-FOR
         # END-IF
 

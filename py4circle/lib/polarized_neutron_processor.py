@@ -100,7 +100,8 @@ class FourCirclePolarizedNeutronProcessor(object):
 
         return ws
 
-    def calculate_polarization(self, exp_number, scan_number, pt_list, peak_count_vec, upper_bkgd_count_vec, lower_bkgd_count_vec):
+    def calculate_polarization(self, exp_number, scan_number, pt_list, peak_count_vec, upper_bkgd_count_vec,
+                               lower_bkgd_count_vec, flag):
         """ calculate polarization
         :param exp_number:
         :param scan_number:
@@ -114,8 +115,9 @@ class FourCirclePolarizedNeutronProcessor(object):
 
         # TODO FIXME - Pt number is all odd due to SPICE bug!
         if len(pt_list) % 2 == 1:
-            raise RuntimeError('Number of Pts. = {} is odd... This is wrong! Talk with Huibo'
-                               '. \nFYI: Pt list: {}'.format(len(pt_list), pt_list))
+            print ('Number of Pts. = {} is odd... This is wrong! Talk with Huibo. \nFYI: Pt list: {}'
+                   ''.format(len(pt_list), pt_list))
+        # END-IF
 
         polarization_list = list()
         single_spin_counts = list()
@@ -125,20 +127,28 @@ class FourCirclePolarizedNeutronProcessor(object):
             spin_down_pt = pt_list[2*pair_index + 1]
             spin_up_hkl = pt_hkl_dict[spin_up_pt]
             spin_down_hkl = pt_hkl_dict[spin_down_pt]
-            if spin_up_hkl != spin_down_hkl:
+            if sum((spin_up_hkl - spin_down_hkl)**2) >= 0.25:
                 raise RuntimeError('For pt {} and {}, HKL {} and {} shall be same!'
                                    ''.format(spin_up_pt, spin_down_pt, spin_up_hkl, spin_down_hkl))
             # calculate spin up
+            spin_up_bkgd = upper_bkgd_count_vec[2*pair_index] + lower_bkgd_count_vec[2*pair_index]
             intensity_spin_up = \
-                peak_count_vec[2*pair_index] - (upper_bkgd_count_vec[2*pair_index] + lower_bkgd_count_vec[2*pair_index])
+                peak_count_vec[2*pair_index] - spin_up_bkgd
+
+            spin_down_bkgd = upper_bkgd_count_vec[2*pair_index + 1] + lower_bkgd_count_vec[2*pair_index + 1]
             intensity_spin_down = \
-                peak_count_vec[2*pair_index + 1] - (upper_bkgd_count_vec[2*pair_index + 1] +
-                                                    lower_bkgd_count_vec[2*pair_index + 1])
+                peak_count_vec[2*pair_index + 1] - spin_down_bkgd
             polarization = intensity_spin_up / intensity_spin_down
-            polarization_list.append((spin_up_hkl, polarization, 1.0))
+            pol_err = polarization * math.sqrt(1/(abs(intensity_spin_up) + 1) + 1/(abs(intensity_spin_down) + 1))
+
+            polarization_list.append((spin_up_hkl, polarization, pol_err, intensity_spin_up, spin_up_bkgd,
+                                      intensity_spin_down, spin_down_bkgd))
             single_spin_counts.append(intensity_spin_up)
             single_spin_counts.append(intensity_spin_down)
         # END-FOR
+
+        # export to file automatically
+        self.export_polarization(polarization_list,  exp_number, scan_number, flag)
 
         return polarization_list, single_spin_counts
 
@@ -157,9 +167,9 @@ class FourCirclePolarizedNeutronProcessor(object):
 
         pt_hkl_dict = dict()
         for row_index in range(spice_table_ws.rowCount()):
-            pt_hkl_dict[spice_table_ws.cell(row_index, pt_index)] = \
+            pt_hkl_dict[spice_table_ws.cell(row_index, pt_index)] = numpy.array([
                 spice_table_ws.cell(row_index, h_index), spice_table_ws.cell(row_index, k_index), \
-                spice_table_ws.cell(row_index, l_index)
+                spice_table_ws.cell(row_index, l_index)])
         # END-FOR
 
         return pt_hkl_dict
@@ -216,6 +226,32 @@ class FourCirclePolarizedNeutronProcessor(object):
         :return:
         """
         return (exp_no, scan_no) in self._mySpiceTableDict
+
+    def export_polarization(self, polarization_list, exp_number, scan_number, flag):
+        """
+
+        :param polarization_list:
+        :return:
+        """
+        import datetime
+        now = datetime.datetime.now()
+        base_name = 'PolarizeFlipExp{}Scan{}_Bkgd{}_{}-{}-{}_H{}_M{}.dat' \
+                    ''.format(exp_number, scan_number, flag, now.year, now.month, now.date(), now.hour, now.minute)
+
+        file_name = os.path.join(self._workDir, base_name)
+
+        out_buffer = '# H  K  L  Flip  Error  SpinUp  SpinUpBk  SpinDown  SpinDownBk'
+        for index in range(len(polarization_list)):
+            hkl, flip, error, spin_up, spin_up_bkgd, spin_down, spin_down_bkgd = polarization_list[index]
+            out_buffer += '{:4d}  {:4d}  {:4d}   {:3.5f}  {:3.5f}  {:3.5f}  {:3.5f}  {:3.5f}  {:3.5f}\n' \
+                          ''.format(int(round(hkl[0])), int(round(hkl[1])), int(round(hkl[2])), flip, error,
+                                    spin_up, spin_up_bkgd, spin_down, spin_down_bkgd)
+
+        out_file = open(file_name, 'w')
+        out_file.write(out_buffer)
+        out_file.close()
+
+        return
 
     @staticmethod
     def find_detector_size(exp_directory, exp_number):
