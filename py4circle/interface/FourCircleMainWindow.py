@@ -622,13 +622,17 @@ class FourCircleMainWindow(QMainWindow):
             # try to set the default
             if self._iptsNumber is not None:
                 default_data_dir = '/HFIR/HB3A/IPTS-{0}/exp{1}/Datafiles'.format(self._iptsNumber, exp_number)
+                default_work_dir = os.path.expanduser('~')
             else:
                 default_data_dir = '/HFIR/HB3A/exp{0}/Datafiles'.format(exp_number)
+                default_work_dir = os.path.expanduser('/HFIR/HB3A/exp{0}/Shared'.format(exp_number))
             if os.path.exists(default_data_dir):
                 # set the directory in
                 self.ui.lineEdit_localSpiceDir.setText(default_data_dir)
                 # find out the detector type
                 status, ret_obj = self._myControl.find_detector_size(default_data_dir, exp_number)
+            if os.path.exists(default_work_dir):
+                self.ui.lineEdit_workDir.setText(default_work_dir)
             else:
                 print '[DB] Default data directory {0} does not exist.'.format(default_data_dir)
 
