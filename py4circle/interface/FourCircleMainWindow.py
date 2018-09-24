@@ -15,6 +15,10 @@ import py4circle.lib.polarized_neutron_processor as polarized_neutron_processor
 from py4circle.interface.integrratedroiview import IntegratedROIView
 
 
+# TODO FIXME : detector size shall be configurable
+DETECTOR_SIZE = 256
+
+
 class FourCircleMainWindow(QMainWindow):
     """
     blabla
@@ -126,7 +130,7 @@ class FourCircleMainWindow(QMainWindow):
         self._integratedViewWindow = None
 
         # instrument information: FIXME - this number shall be flexible with input
-        self._pixelXYSize = 256
+        self._pixelXYSize = DETECTOR_SIZE
 
         # other class variables
         self._homeSrcDir = ''
@@ -393,6 +397,7 @@ class FourCircleMainWindow(QMainWindow):
             # END-FOR
         # END-IF
 
+        integration_info = 'ROI multiply factor: '
         for roi_name in roi_dimension_dict:
             # convert the ROI/rectangular dimension to pixels
             left_bottom_x = roi_dimension_dict[roi_name][0]
@@ -404,19 +409,33 @@ class FourCircleMainWindow(QMainWindow):
             print ('[DB...BAT] Pixel Range: {0}'.format(pixel_range))
 
             # convert to numpy array range
-            min_row = (256 - 1) - int(left_bottom_y + height + 1)
+            min_row = (DETECTOR_SIZE - 1) - int(left_bottom_y + height + 1)
             min_col = int(left_bottom_x - 1)
             max_row = min_row + int(height) + 2
             max_col = int(min_col + width)
+
+            # check whether it is out of boundary
+            original_size = (max_row - min_row + 1) * (max_col - min_col + 1)
+            min_row = max(min_row, 0)
+            max_row = min(max_row, DETECTOR_SIZE - 1)
+            min_col = max(min_col, 0)
+            max_col = min(max_col, DETECTOR_SIZE - 1)
+            new_size = (max_row - min_row + 1) * (max_col - min_col + 1)
+
             matrix_range = (min_row, min_col), (max_row, max_col)
+            multiply_factor = float(original_size) / float(new_size)
 
             pt_list, counts_vector = self._myControl.integrate_roi(int(self.ui.lineEdit_exp.text()),
                                                                    int(self.ui.lineEdit_run.text()),
                                                                    matrix_range)
-            print ('[DB...BAT] pt list type: {}, counts vector type: {}'.format(type(pt_list), type(counts_vector)))
+
+            counts_vector *= multiply_factor
+            if multiply_factor > 1.0000001:
+                integration_info += '{} = {}; '.format(roi_name, multiply_factor)
+
+            print ('[DB...BAT] multiplication factor: {}'.format(multiply_factor))
             integrated_value_dict[roi_name] = pt_list, counts_vector
 
-            # plotting
         # END-FOR
 
         # create a dialog/window for the result
@@ -424,6 +443,7 @@ class FourCircleMainWindow(QMainWindow):
             self._integratedViewWindow = IntegratedROIView(self)
         self._integratedViewWindow.show()
         self._integratedViewWindow.set_integrated_value(integrated_value_dict, roi_color_dict)
+        self._integratedViewWindow.set_integration_info(integration_info)
 
         return
 
@@ -593,10 +613,15 @@ class FourCircleMainWindow(QMainWindow):
         remove a selected ROI (rectangular)
         :return:
         """
-        roi_index_list = self._get_selected_rois()
+        # TODO FIXME - It is wrong!
+        if False:
+            roi_index_list = self._get_selected_rois()
 
-        for roi_index in roi_index_list:
-            self.ui.graphicsView_detector2dPlot.remove_roi(roi_index=roi_index)
+            for roi_index in roi_index_list:
+                self.ui.graphicsView_detector2dPlot.remove_roi(roi_index=roi_index)
+        else:
+            # Temporarily fix
+            self.ui.graphicsView_detector2dPlot.remove_roi(roi_index=None)
 
         return
 
@@ -822,7 +847,7 @@ class FourCircleMainWindow(QMainWindow):
             ret_obj = gutil.parse_integer_list(str(self.ui.lineEdit_detectorGeometry.text()), expected_size=2)
             x_max, y_max = ret_obj
         else:
-            x_max, y_max = 256, 256
+            x_max, y_max = DETECTOR_SIZE, DETECTOR_SIZE
 
         # TODO/ISSUE/NOW/ASAP - Debugging now
         if self.ui.graphicsView_detector2dPlot.has_image_on_canvas():

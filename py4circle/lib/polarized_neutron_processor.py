@@ -457,6 +457,9 @@ class FourCirclePolarizedNeutronProcessor(object):
         for pt_number in sorted(pt_number_list):
             count_matrix = self.load_spice_xml_file2(exp_no=exp_number, scan_no=scan_number, pt_no=pt_number)
             roi_counts = numpy.sum(count_matrix[min_row:max_row, min_col:max_col])
+            if roi_counts < 0.0001:
+                print ('[Warning] It is odd to have zero count on exp {} scan {} pt {}'
+                       ''.format(exp_number, scan_number, pt_number))
             ws_pt_list.append(pt_number)
             integrated_list.append(roi_counts)
         # END-FOR

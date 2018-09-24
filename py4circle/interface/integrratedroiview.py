@@ -208,6 +208,16 @@ class IntegratedROIView(QMainWindow):
 
         return
 
+    def set_integration_info(self, message):
+        """
+
+        @param message:
+        @return:
+        """
+        self.ui.label_multiInfo.setText(message)
+
+        return
+
     def set_integrated_value(self, integrated_value_dict, roi_color_dict):
         """
         set integrated value to this window
