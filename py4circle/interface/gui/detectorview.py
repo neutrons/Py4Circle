@@ -218,8 +218,6 @@ class DetectorView(mplgraphicsview2d.MplGraphicsView2D):
 
         @return:
         """
-        print ('mouse pressed: ', event.xdata, event.ydata)
-
         self.toggle_selector(event)
 
         return
@@ -237,7 +235,8 @@ class DetectorView(mplgraphicsview2d.MplGraphicsView2D):
         if roi_index is None:
             roi_index_list = self._roiCollections.keys()
         else:
-            assert isinstance(roi_index, int), 'ROI index {0} shall be an integer but not a {1}.'.format(roi_index, type(roi_index))
+            assert isinstance(roi_index, int), 'ROI index {0} shall be an integer but not a {1}.' \
+                                               ''.format(roi_index, type(roi_index))
             if roi_index not in self._roiCollections:
                 raise RuntimeError('ROI with index {0} does not exist.  Existing ROIs are {1}'
                                    ''.format(roi_index, self._roiCollections.keys()))
