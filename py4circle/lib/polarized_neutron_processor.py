@@ -131,15 +131,28 @@ class FourCirclePolarizedNeutronProcessor(object):
                 raise RuntimeError('For pt {} and {}, HKL {} and {} shall be same!'
                                    ''.format(spin_up_pt, spin_down_pt, spin_up_hkl, spin_down_hkl))
             # calculate spin up
-            spin_up_bkgd = upper_bkgd_count_vec[2*pair_index] + lower_bkgd_count_vec[2*pair_index]
-            intensity_spin_up = \
-                peak_count_vec[2*pair_index] - spin_up_bkgd
+            b1_up = upper_bkgd_count_vec[2*pair_index]
+            b2_up = lower_bkgd_count_vec[2*pair_index]
+            roi_up = peak_count_vec[2*pair_index]
+            spin_up_bkgd = b1_up + b2_up
+            intensity_spin_up = roi_up - spin_up_bkgd
 
-            spin_down_bkgd = upper_bkgd_count_vec[2*pair_index + 1] + lower_bkgd_count_vec[2*pair_index + 1]
-            intensity_spin_down = \
-                peak_count_vec[2*pair_index + 1] - spin_down_bkgd
+            # calculate spin down
+            b1_down = upper_bkgd_count_vec[2*pair_index + 1]
+            b2_down = lower_bkgd_count_vec[2*pair_index + 1]
+            roi_down = peak_count_vec[2*pair_index + 1]
+            spin_down_bkgd = b1_down + b2_down
+            intensity_spin_down = roi_down - spin_down_bkgd
+
+            # calculate polarization
             polarization = intensity_spin_up / intensity_spin_down
-            pol_err = polarization * math.sqrt(1/(abs(intensity_spin_up) + 1) + 1/(abs(intensity_spin_down) + 1))
+
+            # propagating the error
+            e_up = math.sqrt(roi_up**2 + b1_up**2 + b2_up**2)
+            e_down = math.sqrt(roi_down**2 + b1_down**2 + b2_down**2)
+
+            pol_err = \
+                polarization * math.sqrt((e_up/(1 + intensity_spin_up))**2 + (e_down/(1 + intensity_spin_down))**2)
 
             polarization_list.append((spin_up_hkl, polarization, pol_err, intensity_spin_up, spin_up_bkgd,
                                       intensity_spin_down, spin_down_bkgd))
