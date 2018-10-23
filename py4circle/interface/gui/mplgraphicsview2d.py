@@ -2,11 +2,17 @@
 import os
 import numpy as np
 
-from PyQt4 import QtGui, QtCore
-from PyQt4.QtCore import pyqtSignal
+try:
+    from PyQt5.QtWidgets import QWidget, QVBoxLayout, QSizePolicy
+    from PyQt5.QtCore import pyqtSignal
+    from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+    from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar2
+except ImportError:
+    from PyQt4.QtCore import pyqtSignal
+    from PyQt4.QtGui import QWidget, QVBoxLayout, QSizePolicy
+    from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+    from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar2
 
-from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar2
 from matplotlib.figure import Figure
 import matplotlib.image
 import matplotlib.pyplot as plt
@@ -50,7 +56,7 @@ MplBasicColors = [
     "yellow"]
 
 
-class MplGraphicsView2D(QtGui.QWidget):
+class MplGraphicsView2D(QWidget):
     """ A combined graphics view including matplotlib canvas and
     a navigation tool bar
 
@@ -72,7 +78,7 @@ class MplGraphicsView2D(QtGui.QWidget):
         self._homeXYLimit = None
 
         # set up layout
-        self._vBox = QtGui.QVBoxLayout(self)
+        self._vBox = QVBoxLayout(self)
         self._vBox.addWidget(self._myCanvas)
         self._vBox.addWidget(self._myToolBar)
 
@@ -109,7 +115,7 @@ class MplGraphicsView2D(QtGui.QWidget):
         return
 
     def add_2d_plot(self, array2d, x_min, x_max, y_min, y_max, hold_prev_image=True, y_tick_label=None,
-                    plot_type='image'):
+                    plot_type='image', title=None):
         """
         Add a 2D image to canvas
         :param array2d: numpy 2D array
@@ -119,6 +125,7 @@ class MplGraphicsView2D(QtGui.QWidget):
         :param y_max:
         :param hold_prev_image:
         :param y_tick_label:
+        :param title:
         :return:
         """
         # obsoleted: self._myCanvas.addPlot2D(array2d, x_min, x_max, y_min, y_max, hold_prev_image, y_tick_label)
@@ -134,6 +141,9 @@ class MplGraphicsView2D(QtGui.QWidget):
             blabla
 
         self._hasImage = True
+
+        if title is not None:
+            self._myCanvas.set_title(title, color='red')
 
         return
 
@@ -321,6 +331,9 @@ class MplGraphicsView2D(QtGui.QWidget):
 
         return
 
+    def save_image(self, file_name):
+        self._myCanvas.fig.savefig(file_name)
+
     def set_indicator_position(self, line_id, pos_x, pos_y):
         """ Set the indicator to new position
         :param line_id: indicator ID
@@ -430,7 +443,7 @@ class MplGraphicsView2D(QtGui.QWidget):
 
 class Qt4Mpl2DCanvas(FigureCanvas):
     """  A customized Qt widget for matplotlib figure.
-    It can be used to replace GraphicsView of QtGui
+    It can be used to replace GraphicsView of QtWidgets
     """
     def __init__(self, parent):
         """  Initialization
@@ -456,7 +469,7 @@ class Qt4Mpl2DCanvas(FigureCanvas):
         self.setParent(parent)
 
         # Set size policy to be able to expanding and resizable with frame
-        FigureCanvas.setSizePolicy(self, QtGui.QSizePolicy.Expanding,QtGui.QSizePolicy.Expanding)
+        FigureCanvas.setSizePolicy(self, QSizePolicy.Expanding, QSizePolicy.Expanding)
         FigureCanvas.updateGeometry(self)
 
         # Variables to manage all lines/subplot
@@ -850,12 +863,12 @@ class Qt4Mpl2DCanvas(FigureCanvas):
         # check input
         assert isinstance(title, str), 'Title must be a string but not a {0}.'.format(type(title))
         assert isinstance(color, str), 'Color must be a string but not a {0}.'.format(type(color))
-
+    
         print '[DB...BAT] Set {0} in color {1} as the figure\'s title.'.format(title, color)
-        self.setWindowTitle(title)
-
+        self.axes.set_title(title)
+    
         self.draw()
-
+    
         return
 
     def remove_plot_1d(self, plot_key):

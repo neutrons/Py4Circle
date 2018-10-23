@@ -1,9 +1,16 @@
-from PyQt4 import QtGui, QtCore
-import gui.ResultViewWindow_ui
+try:
+    from PyQt5 import QtCore
+    from PyQt5.QtWidgets import QMainWindow, QFileDialog, QMessageBox
+except ImportError:
+    from PyQt4 import QtCore
+    from PyQt4.QtGui import QMainWindow, QFileDialog, QMessageBox
+# import gui.ResultViewWindow_ui
+from gui.ui_ResultViewWindow import Ui_MainWindow as ResultView_UI_MainWindow
+
 import numpy as np
 
 
-class IntegratedROIView(QtGui.QMainWindow):
+class IntegratedROIView(QMainWindow):
     """
     Extended QMainWindow class for plotting and processing integrated ROI for polarized neutron experiment
     """
@@ -13,32 +20,26 @@ class IntegratedROIView(QtGui.QMainWindow):
         :param parent:
         """
         super(IntegratedROIView, self).__init__(parent)
+        self._my_parent = parent
 
         # set up UI
-        self.ui = gui.ResultViewWindow_ui.Ui_MainWindow()
+        self.ui = ResultView_UI_MainWindow()
         self.ui.setupUi(self)
 
         # initialize widget
         self.ui.graphicsView_result.set_subplots(1, 1)
 
         # define event handling related with widgets
-        self.connect(self.ui.pushButton_saveResult, QtCore.SIGNAL('clicked()'),
-                     self.do_save_integrated)
+        self.ui.pushButton_saveResult.clicked.connect(self.do_save_integrated)
+        self.ui.pushButton_closeWindow.clicked.connect(self.do_close_window)
+        self.ui.pushButton_showExamples.clicked.connect(self.do_show_examples)
+        self.ui.pushButton_calculate.clicked.connect(self.do_calculation)
+        self.ui.pushButton_plotTableData.clicked.connect(self.do_plot_data)
+        self.ui.pushButton_clearImage.clicked.connect(self.do_clear_plots)
 
-        self.connect(self.ui.pushButton_closeWindow, QtCore.SIGNAL('clicked()'),
-                     self.do_close_window)
-
-        self.connect(self.ui.pushButton_showExamples, QtCore.SIGNAL('clicked()'),
-                     self.do_show_examples)
-
-        self.connect(self.ui.pushButton_calculate, QtCore.SIGNAL('clicked()'),
-                     self.do_calculation)
-
-        self.connect(self.ui.pushButton_plotTableData, QtCore.SIGNAL('clicked()'),
-                     self.do_plot_data)
-
-        self.connect(self.ui.pushButton_clearImage, QtCore.SIGNAL('clicked()'),
-                     self.do_clear_plots)
+        self.ui.actionExport_Polarization.triggered.connect(self.do_export_polarization)
+        self.ui.actionQuit.triggered.connect(self.do_close_window)
+        self.ui.actionCalculate_Polarization.triggered.connect(self.do_calculate_polarization)
 
         return
 
@@ -74,6 +75,17 @@ class IntegratedROIView(QtGui.QMainWindow):
 
         return _cal_value
 
+    def do_calculate_polarization(self):
+        """
+        calculate polarization
+        :return:
+        """
+        polarizers, single_spins = self._my_parent.calculate_polarization(self._integrated_counts_dict)
+        self.ui.tableView_result.set_column_values(self.ui.tableView_result._calculatedColumnIndex, single_spins)
+        self.ui.tableView_result.set_column_values(self.ui.tableView_result._polarizationColumnIndex, polarizers, skip=1)
+
+        return
+
     def clear_plots(self):
         """
         clear the plotted lines
@@ -106,6 +118,13 @@ class IntegratedROIView(QtGui.QMainWindow):
 
         return
 
+    def do_export_polarization(self):
+        """
+        export polarization
+        :return:
+        """
+
+
     def do_plot_data(self):
         """
         plot data
@@ -132,12 +151,13 @@ class IntegratedROIView(QtGui.QMainWindow):
         """
         # get the target directory
         file_filter = 'Data Files (*.dat);;All Files (*.*)'
-        target_dir = str(QtGui.QFileDialog.getOpenFileName(self, self._workingDir, file_filter))
+        target_dir = str(QFileDialog.getOpenFileName(self, self._workingDir, file_filter))
         if len(target_dir) == 0:
             # quit if user cancel the operation
             return
 
         # save result
+        # TODO FIXME shall be continued
 
         return
 
@@ -168,7 +188,7 @@ class IntegratedROIView(QtGui.QMainWindow):
         """
         message = 'roi1 - roi2 + 3 * (roi3)'
 
-        QtGui.QMessageBox.information(self, 'Polarized Data Analysis Example', message)
+        QMessageBox.information(self, 'Polarized Data Analysis Example', message)
 
         return
 
@@ -185,6 +205,16 @@ class IntegratedROIView(QtGui.QMainWindow):
         assert len(vec_x) == len(vec_y), 'Vector X and Y must have same sizes.'
 
         self.ui.graphicsView_result.add_plot(vec_x, vec_y, x_label=x_axis_label, color=line_color)
+
+        return
+
+    def set_integration_info(self, message):
+        """
+
+        @param message:
+        @return:
+        """
+        self.ui.label_multiInfo.setText(message)
 
         return
 
@@ -210,7 +240,10 @@ class IntegratedROIView(QtGui.QMainWindow):
         # plot
         for roi_name in integrated_value_dict.keys():
             pt_list, count_vec = integrated_value_dict[roi_name]
-            roi_color = roi_color_dict[roi_name]
+            if roi_name in roi_color_dict:
+                roi_color = roi_color_dict[roi_name]
+            else:
+                roi_color = 'brown'
             self.plot_counts(np.array(pt_list), count_vec, 'Pt', roi_color)
         # END-FOR
 
@@ -256,5 +289,7 @@ class IntegratedROIView(QtGui.QMainWindow):
                 self.ui.tableView_result.set_integrated_value(pt_number, roi_name, pt_dict[pt_number][roi_name])
             # END-FOR
         # END-FOR
+
+        self._integrated_counts_dict = integrated_value_dict
 
         return

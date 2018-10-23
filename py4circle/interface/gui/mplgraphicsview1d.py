@@ -2,16 +2,21 @@
 """
 Graphics class with matplotlib backend specific for advanced 1D plot
 """
-import os
 import numpy as np
 
-from PyQt4 import QtGui, QtCore
-from PyQt4.QtCore import pyqtSignal
+try:
+    from PyQt5.QtWidgets import QWidget, QVBoxLayout, QSizePolicy
+    from PyQt5.QtCore import pyqtSignal
+    from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+    from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar2
+except ImportError:
+    from PyQt4.QtCore import pyqtSignal
+    from PyQt4.QtGui import QWidget, QVBoxLayout, QSizePolicy
+    from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+    from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar2
 
-from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar2
 from matplotlib.figure import Figure
-import matplotlib.image
+# import matplotlib.image
 
 MplLineStyles = ['-', '--', '-.', ':', 'None', ' ', '']
 MplLineMarkers = [
@@ -51,7 +56,7 @@ MplBasicColors = [
     "yellow"]
 
 
-class MplGraphicsView1D(QtGui.QWidget):
+class MplGraphicsView1D(QWidget):
     """ A combined graphics view including matplotlib canvas and a navigation tool bar
     1. specific for 1-D data
     2.
@@ -64,7 +69,7 @@ class MplGraphicsView1D(QtGui.QWidget):
         """
         # Initialize parent
         # super(MplGraphicsView1D, self).__init__(parent)
-        QtGui.QWidget.__init__(self, parent)
+        QWidget.__init__(self, parent)
 
         # set up other variables
         # key = line ID, value = row, col, bool (is main axes???)
@@ -104,7 +109,7 @@ class MplGraphicsView1D(QtGui.QWidget):
         self._homeXYLimit = None
 
         # set up layout
-        self._vBox = QtGui.QVBoxLayout(self)
+        self._vBox = QVBoxLayout(self)
         self._vBox.addWidget(self._myCanvas)
         self._vBox.addWidget(self._myToolBar)
 
@@ -693,7 +698,7 @@ class Qt4MplCanvasMultiFigure(FigureCanvas):
             self.set_subplots(row_size, col_size)
 
         # Set size policy to be able to expanding and resizable with frame
-        FigureCanvas.setSizePolicy(self, QtGui.QSizePolicy.Expanding,QtGui.QSizePolicy.Expanding)
+        FigureCanvas.setSizePolicy(self, QSizePolicy.Expanding, QSizePolicy.Expanding)
         FigureCanvas.updateGeometry(self)
 
         return

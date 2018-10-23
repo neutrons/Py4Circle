@@ -1,8 +1,8 @@
 from six.moves import input
 import numpy as np
 import mplgraphicsview2d
-from matplotlib.widgets import LassoSelector
-from matplotlib.path import Path
+# from matplotlib.widgets import LassoSelector
+# from matplotlib.path import Path
 from matplotlib.widgets import RectangleSelector
 import matplotlib.pyplot as plt
 
@@ -126,9 +126,10 @@ class DetectorView(mplgraphicsview2d.MplGraphicsView2D):
         # eclick and erelease are the press and release events
         x1, y1 = eclick.xdata, eclick.ydata
         x2, y2 = erelease.xdata, erelease.ydata
-        print('[DB...BAT...BAT] line_select_callback() is called at ({0}, {1})'.format(x2, y2))
-        print("\t(%3.2f, %3.2f) --> (%3.2f, %3.2f)" % (x1, y1, x2, y2))
-        print("\tThe button you used were: %s %s" % (eclick.button, erelease.button))
+        print ('[DB...BAT...BAT] line_select_callback() is called at ({0}, {1})'.format(x2, y2))
+        print ("\t(%3.2f, %3.2f) --> (%3.2f, %3.2f)" % (x1, y1, x2, y2))
+        print ("\tThe button you used were: %s %s" % (eclick.button, erelease.button))
+        print ('\tROI size: {}, {}'.format(self._roiSizeX, self._roiSizeY))
 
         # determine size of ROI/rectangular
         if self._roiSizeX is None or self._roiSizeY is None:
@@ -207,9 +208,7 @@ class DetectorView(mplgraphicsview2d.MplGraphicsView2D):
         @param event:
         @return:
         """
-        print event.key
         if event.key in ['R', 'r']:
-            print('move to the right')
             self.move_rectangular_right()
 
         return
@@ -219,8 +218,6 @@ class DetectorView(mplgraphicsview2d.MplGraphicsView2D):
 
         @return:
         """
-        print ('mouse pressed: ', event.xdata, event.ydata)
-
         self.toggle_selector(event)
 
         return
@@ -228,26 +225,29 @@ class DetectorView(mplgraphicsview2d.MplGraphicsView2D):
     def remove_roi(self, roi_index=None):
         """ remove specified ROI.  If not specified, then all ROI will be removed from canvas
         """
-        # get roi indexes
-        if roi_index is None:
-            roi_index_list = self._roiCollections.keys()
-        else:
-            assert isinstance(roi_index, int), 'ROI index {0} shall be an integer but not a {1}.'.format(roi_index, type(roi_index))
-            if roi_index not in self._roiCollections:
-                raise RuntimeError('ROI with index {0} does not exist.'.format(roi_index))
-            roi_index_list = [roi_index]
-        # END-IF-ELSE
-
-        # remove rectagular
-        for roi_index in roi_index_list:
-            self._roiCollections[roi_index].remove()
-            del self._roiCollections[roi_index]
-
         # reset roi index
         if roi_index is None:
             # reset ROI size
             self._roiSizeX = None
             self._roiSizeY = None
+
+        # get roi indexes
+        if roi_index is None:
+            roi_index_list = self._roiCollections.keys()
+        else:
+            assert isinstance(roi_index, int), 'ROI index {0} shall be an integer but not a {1}.' \
+                                               ''.format(roi_index, type(roi_index))
+            if roi_index not in self._roiCollections:
+                raise RuntimeError('ROI with index {0} does not exist.  Existing ROIs are {1}'
+                                   ''.format(roi_index, self._roiCollections.keys()))
+            roi_index_list = [roi_index]
+        # END-IF-ELSE
+
+        # remove rectangular
+        for roi_index in roi_index_list:
+            rectangular, color = self._roiCollections[roi_index]
+            rectangular.remove()
+            del self._roiCollections[roi_index]
 
         # flush
         self.canvas()._flush()

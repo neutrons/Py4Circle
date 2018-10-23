@@ -104,7 +104,7 @@ class IntegratedCountsTable(tableBase.NTableWidget):
             if col_index == self._calculatedColumnIndex:
                 allow_blank = True
             else:
-                allow_blank =  False
+                allow_blank = False
             value_dict[col_name] = self.get_cell_value(row_number, col_index, allow_blank)
         # END-FOR
 
@@ -128,6 +128,25 @@ class IntegratedCountsTable(tableBase.NTableWidget):
 
         # update value
         self.update_cell_value(row_number, self._calculatedColumnIndex, value)
+
+        return
+
+    def set_column_values(self, col_index, value_vec, skip=0):
+        """
+        set column values
+        :param col_index:
+        :param value_vec:
+        :param skip:
+        :return:
+        """
+        for index in range(len(value_vec)):
+            row_index = index * (1 + skip)
+            if row_index >= self.rowCount():
+                break
+            else:
+                self.update_cell_value(row_index, col_index, value_vec[index])
+
+        # END-FOR
 
         return
 
@@ -165,7 +184,7 @@ class IntegratedCountsTable(tableBase.NTableWidget):
 
     def setup(self, index_name, index_type, roi_name_list):
         """
-        Init setup
+        Init setup: columns are to be created dynamically
         :return:
         """
         # check inputs
@@ -188,6 +207,11 @@ class IntegratedCountsTable(tableBase.NTableWidget):
         self._tableSetupList.append(('Result', 'float'))
         self._tableColumnNames.append('Result')
         self._calculatedColumnIndex = len(self._tableSetupList) - 1
+
+        #
+        self._tableSetupList.append(('Polarization', 'float'))
+        self._tableColumnNames.append('Polarization')
+        self._polarizationColumnIndex = len(self._tableSetupList) - 1
 
         # do set up
         self.init_setup(self._tableSetupList)
@@ -383,6 +407,8 @@ class ScanListTable(tableBase.NTableWidget):
         assert isinstance(num_rows, int)
         assert num_rows > 0
         assert len(self._myScanSummaryList) > 0
+
+        print ('Number of rows = {}; scan summary list = {}'.format(num_rows, len(self._myScanSummaryList)))
 
         for i_ref in range(min(num_rows, len(self._myScanSummaryList))):
             # get counts

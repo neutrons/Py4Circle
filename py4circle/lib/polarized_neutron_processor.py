@@ -1,6 +1,7 @@
 import os
 import sys
 sys.path.append('/Users/wzz/MantidBuild/debug-stable/bin/')
+sys.path.append('/opt/mantidnightly/bin/')
 
 import numpy
 import mantid
@@ -99,6 +100,93 @@ class FourCirclePolarizedNeutronProcessor(object):
 
         return ws
 
+    def calculate_polarization(self, exp_number, scan_number, pt_list, peak_count_vec, upper_bkgd_count_vec,
+                               lower_bkgd_count_vec, flag):
+        """ calculate polarization
+        :param exp_number:
+        :param scan_number:
+        :param pt_list:
+        :param peak_count_vec:
+        :param upper_bkgd_count_vec:
+        :param lower_bkgd_count_vec:
+        :return:
+        """
+        pt_hkl_dict = self.retrieve_hkl_from_spice(exp_number, scan_number)
+
+        # TODO FIXME - Pt number is all odd due to SPICE bug!
+        if len(pt_list) % 2 == 1:
+            print ('Number of Pts. = {} is odd... This is wrong! Talk with Huibo. \nFYI: Pt list: {}'
+                   ''.format(len(pt_list), pt_list))
+        # END-IF
+
+        polarization_list = list()
+        single_spin_counts = list()
+        for pair_index in range(len(pt_list)/2):
+            # check spin up and spin down shall have same pt.
+            spin_up_pt = pt_list[2*pair_index]
+            spin_down_pt = pt_list[2*pair_index + 1]
+            spin_up_hkl = pt_hkl_dict[spin_up_pt]
+            spin_down_hkl = pt_hkl_dict[spin_down_pt]
+            if sum((spin_up_hkl - spin_down_hkl)**2) >= 0.25:
+                raise RuntimeError('For pt {} and {}, HKL {} and {} shall be same!'
+                                   ''.format(spin_up_pt, spin_down_pt, spin_up_hkl, spin_down_hkl))
+            # calculate spin up
+            b1_up = upper_bkgd_count_vec[2*pair_index]
+            b2_up = lower_bkgd_count_vec[2*pair_index]
+            roi_up = peak_count_vec[2*pair_index]
+            spin_up_bkgd = b1_up + b2_up
+            intensity_spin_up = roi_up - spin_up_bkgd
+
+            # calculate spin down
+            b1_down = upper_bkgd_count_vec[2*pair_index + 1]
+            b2_down = lower_bkgd_count_vec[2*pair_index + 1]
+            roi_down = peak_count_vec[2*pair_index + 1]
+            spin_down_bkgd = b1_down + b2_down
+            intensity_spin_down = roi_down - spin_down_bkgd
+
+            # calculate polarization
+            polarization = intensity_spin_up / intensity_spin_down
+
+            # propagating the error
+            e_up = math.sqrt(roi_up**2 + b1_up**2 + b2_up**2)
+            e_down = math.sqrt(roi_down**2 + b1_down**2 + b2_down**2)
+
+            pol_err = \
+                polarization * math.sqrt((e_up/(1 + intensity_spin_up))**2 + (e_down/(1 + intensity_spin_down))**2)
+
+            polarization_list.append((spin_up_hkl, polarization, pol_err, intensity_spin_up, spin_up_bkgd,
+                                      intensity_spin_down, spin_down_bkgd))
+            single_spin_counts.append(intensity_spin_up)
+            single_spin_counts.append(intensity_spin_down)
+        # END-FOR
+
+        # export to file automatically
+        self.export_polarization(polarization_list,  exp_number, scan_number, flag)
+
+        return polarization_list, single_spin_counts
+
+    def retrieve_hkl_from_spice(self, exp_number, scan_number):
+        """
+        get HKL of each pt number
+        :param exp_number:
+        :param scan_number:
+        :return:
+        """
+        spice_table_ws = self._get_spice_workspace(exp_number, scan_number)
+        pt_index = spice_table_ws.getColumnNames().index('Pt.')
+        h_index = spice_table_ws.getColumnNames().index('h')
+        k_index = spice_table_ws.getColumnNames().index('k')
+        l_index = spice_table_ws.getColumnNames().index('l')
+
+        pt_hkl_dict = dict()
+        for row_index in range(spice_table_ws.rowCount()):
+            pt_hkl_dict[spice_table_ws.cell(row_index, pt_index)] = numpy.array([
+                spice_table_ws.cell(row_index, h_index), spice_table_ws.cell(row_index, k_index), \
+                spice_table_ws.cell(row_index, l_index)])
+        # END-FOR
+
+        return pt_hkl_dict
+
     def does_file_exist(self, exp_number, scan_number, pt_number=None):
         """
         Check whether data file for a scan or pt number exists on the
@@ -151,6 +239,32 @@ class FourCirclePolarizedNeutronProcessor(object):
         :return:
         """
         return (exp_no, scan_no) in self._mySpiceTableDict
+
+    def export_polarization(self, polarization_list, exp_number, scan_number, flag):
+        """
+
+        :param polarization_list:
+        :return:
+        """
+        import datetime
+        now = datetime.datetime.now()
+        base_name = 'PolarizeFlipExp{}Scan{}_Bkgd{}_{}-{}-{}_H{}_M{}.dat' \
+                    ''.format(exp_number, scan_number, flag, now.year, now.month, now.date(), now.hour, now.minute)
+
+        file_name = os.path.join(self._workDir, base_name)
+
+        out_buffer = '# H  K  L  Flip  Error  SpinUp  SpinUpBk  SpinDown  SpinDownBk'
+        for index in range(len(polarization_list)):
+            hkl, flip, error, spin_up, spin_up_bkgd, spin_down, spin_down_bkgd = polarization_list[index]
+            out_buffer += '{:4d}  {:4d}  {:4d}   {:3.5f}  {:3.5f}  {:3.5f}  {:3.5f}  {:3.5f}  {:3.5f}\n' \
+                          ''.format(int(round(hkl[0])), int(round(hkl[1])), int(round(hkl[2])), flip, error,
+                                    spin_up, spin_up_bkgd, spin_down, spin_down_bkgd)
+
+        out_file = open(file_name, 'w')
+        out_file.write(out_buffer)
+        out_file.close()
+
+        return
 
     @staticmethod
     def find_detector_size(exp_directory, exp_number):
@@ -341,8 +455,9 @@ class FourCirclePolarizedNeutronProcessor(object):
             min_col = int(roi_range[0][1])
             max_row = int(roi_range[1][0])
             max_col = int(roi_range[1][1])
-        except IndexError as index_rror:
-            raise RuntimeError('Input ROI {0} does not have 2 x 2 elements.'.format(roi_range))
+        except IndexError as index_err:
+            raise RuntimeError('Input ROI {0} does not have 2 x 2 elements. FYI: {1}'
+                               ''.format(roi_range, index_err))
 
         # load all Pts. in this scan and do integration (simple summing)
         status, pt_number_list = self.get_pt_numbers(exp_number, scan_number)
@@ -355,6 +470,9 @@ class FourCirclePolarizedNeutronProcessor(object):
         for pt_number in sorted(pt_number_list):
             count_matrix = self.load_spice_xml_file2(exp_no=exp_number, scan_no=scan_number, pt_no=pt_number)
             roi_counts = numpy.sum(count_matrix[min_row:max_row, min_col:max_col])
+            if roi_counts < 0.0001:
+                print ('[Warning] It is odd to have zero count on exp {} scan {} pt {}'
+                       ''.format(exp_number, scan_number, pt_number))
             ws_pt_list.append(pt_number)
             integrated_list.append(roi_counts)
         # END-FOR
@@ -670,3 +788,7 @@ class FourCirclePolarizedNeutronProcessor(object):
         self._scanSummaryList = scan_sum_list
 
         return True, scan_sum_list, error_message
+
+    @property
+    def working_dir(self):
+        return self._workDir

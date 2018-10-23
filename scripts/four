@@ -7,7 +7,10 @@ sys.path.append(cwd_dir)
 import py4circle
 from py4circle.interface.gui.ipythonanalysiswidget import IPyAnalysisWidget
 
-from PyQt4 import QtGui
+try:
+    from PyQt5.QtWidgets import QApplication
+except ImportError:
+    from PyQt4.QtGui import QApplication
 import py4circle.interface.FourCircleMainWindow as MainWindowFC
 import sys
 
@@ -15,10 +18,10 @@ import sys
 def main(argv):
     """
     """
-    if QtGui.QApplication.instance():
-        _app = QtGui.QApplication.instance()
+    if QApplication.instance():
+        _app = QApplication.instance()
     else:
-        _app = QtGui.QApplication(sys.argv)
+        _app = QApplication(sys.argv)
     return _app
 
 

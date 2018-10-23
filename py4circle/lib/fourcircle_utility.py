@@ -177,7 +177,8 @@ def get_hb3a_wavelength(m1_motor_pos):
 
     # hard-coded HB3A m1 position and wavelength mapping
     m1_pos_list = [(-25.870, 1.003),
-                   (-39.170, 1.5424)]
+                   (-39.170, 1.5424),
+                   (-3.9000, 2.55)]
 
     motor_pos_tolerance = 0.2
 
