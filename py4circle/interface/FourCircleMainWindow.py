@@ -2,26 +2,37 @@ import numpy as np
 try:
     from PyQt5 import QtCore
     from PyQt5.QtWidgets import QMainWindow, QFileDialog, QMessageBox
+    from PyQt5.uic import loadUi as load_ui
 except ImportError:
     from PyQt4 import QtCore
-    from PyQt4.QtGui import QMainWindow, QFileDialog, QMessageBox
+    from PyQt4.QtGui import QMainWindow, QFileDialog, QMessageBox, QVBoxLayout
+    from PyQt4 import uic
+    from PyQt4.uic import loadUi as load_ui
 import os
-# import gui.MainWindow_ui as MainWindow_ui
-import gui.ui_MainWindow as MainWindow_ui
 import math
 
 import guiutility as gutil
 import py4circle.lib.polarized_neutron_processor as polarized_neutron_processor
 from py4circle.interface.integrratedroiview import IntegratedROIView
 
+# promoted widgets
+from py4circle.interface.gui.dataanalysiswidget import GeneralPurposeDataView, GeneralTableView
+from py4circle.interface.gui.detectorview import DetectorView
+from py4circle.interface.gui.tablewidgets import ScanListTable
+from py4circle.interface.gui.ipythonanalysiswidget import IPyAnalysisWidget
 
+try:
+    _fromUtf8 = QtCore.QString.fromUtf8
+except AttributeError:
+    def _fromUtf8(s):
+        return s
+  
 # TODO FIXME : detector size shall be configurable
 DETECTOR_SIZE = 256
 
 
 class FourCircleMainWindow(QMainWindow):
-    """
-    blabla
+    """ Main window for 4-circle polarized experiment
     """
     TabPage = {'ROI Setup': 1,
                'Calculate UB': 3,
@@ -45,8 +56,10 @@ class FourCircleMainWindow(QMainWindow):
         self._homeDir = os.path.expanduser('~')
 
         # set up UI
-        self.ui = MainWindow_ui.Ui_MainWindow()
-        self.ui.setupUi(self)
+        ui_path = os.path.join(os.path.dirname(__file__), 'gui/MainWindow.ui')
+        self.ui = load_ui(ui_path, baseinstance=self)
+
+        self._promote_widgets()
 
         self._init_widgets()
 
@@ -79,39 +92,6 @@ class FourCircleMainWindow(QMainWindow):
 
         self.ui.actionQuit.triggered.connect(self.do_quit)
 
-        # self.connect(self.ui.pushButton_browseLocalDataDir, QtCore.SIGNAL('clicked()'),
-        #              self.do_browse_local_spice_data)
-        # self.connect(self.ui.pushButton_plotRawPt, QtCore.SIGNAL('clicked()'),
-        #              self.do_plot_pt_raw)
-        #
-        # # about set up ROI for polarized neutron
-        # self.connect(self.ui.pushButton_viewSurveyPeak, QtCore.SIGNAL('clicked()'),
-        #              self.do_view_survey_peak)
-        # self.connect(self.ui.pushButton_prevPtNumber, QtCore.SIGNAL('clicked()'),
-        #              self.do_plot_prev_pt_raw)
-        # self.connect(self.ui.pushButton_nextPtNumber, QtCore.SIGNAL('clicked()'),
-        #              self.do_plot_next_pt_raw)
-        #
-        # # about list all scans
-        # self.connect(self.ui.pushButton_survey, QtCore.SIGNAL('clicked()'),
-        #              self.do_survey)
-        #
-        # # ROI operation
-        # self.connect(self.ui.pushButton_cancelROI, QtCore.SIGNAL('clicked()'),
-        #              self.do_remove_roi)
-        # self.connect(self.ui.pushButton_integrateROI, QtCore.SIGNAL('clicked()'),
-        #              self.do_integrate_rois)
-        #
-        # #: integrate ROI
-        # self.connect(self.ui.pushButton_roiUp, QtCore.SIGNAL('clicked()'),
-        #              self.do_move_roi_up)
-        # self.connect(self.ui.pushButton_roiDown, QtCore.SIGNAL('clicked()'),
-        #              self.do_move_roi_down)
-        # self.connect(self.ui.pushButton_roiLeft, QtCore.SIGNAL('clicked()'),
-        #              self.do_move_roi_left)
-        # self.connect(self.ui.pushButton_roiRight, QtCore.SIGNAL('clicked()'),
-        #              self.do_move_roi_right)
-
         # menu
         self.ui.actionShow_Result_Window.triggered.connect(self.menu_show_result_view)
         # self.connect(self.ui.actionShow_Result_Window, QtCore.SIGNAL('triggered()'),
@@ -127,13 +107,50 @@ class FourCircleMainWindow(QMainWindow):
                                  5: self.ui.radioButton_roiNo6}
 
         # define child windows
-        self._integratedViewWindow = None
+        self._integratedViewWindow = IntegratedROIView(self)
 
         # instrument information: FIXME - this number shall be flexible with input
         self._pixelXYSize = DETECTOR_SIZE
 
         # other class variables
         self._homeSrcDir = ''
+
+        return
+
+    def _promote_widgets(self):
+        """
+
+        :return:
+        """
+        # set up "promoted" widgets
+        mpl_layout = QVBoxLayout()
+        self.ui.frame_generalPlotView.setLayout(mpl_layout)
+        self.ui.graphicsView_generalPlotView = GeneralPurposeDataView(self.ui.tabAnalysis)
+        self.setObjectName(_fromUtf8("graphicsView_generalPlotView"))
+        mpl_layout.addWidget(self.ui.graphicsView_generalPlotView)
+
+        mpl_layout = QVBoxLayout()
+        self.ui.frame_detector2dPlot.setLayout(mpl_layout)
+        self.graphicsView_detector2dPlot = DetectorView(self.ui.tab_determineROIs)
+        mpl_layout.addWidget(self.graphicsView_detector2dPlot)
+
+        gen_table_layout = QVBoxLayout()
+        self.ui.frame_generalTableView.setLayout(gen_table_layout)
+        self.ui.tableView_generalTableView = GeneralTableView(self.ui.tabAnalysis)
+        gen_table_layout.addWidget(self.ui.tableView_generalTableView)
+
+        # survey_table_layout = QVBoxLayout()
+        # self.ui.frame_surveyTable.setLayout(survey_table_layout)
+        self.ui.tableWidget_surveyTable = ScanListTable(self.ui)
+        # survey_table_layout.addWidget(self.ui.tableWidget_surveyTable)
+        row = 1
+        col = 0
+        self.ui.gridLayout_4.addWidget(self.ui.tableWidget_surveyTable, row, col)
+
+        ipython_layout = QVBoxLayout()
+        self.ui.frame_ipythonConsole.setLayout(ipython_layout)
+        self.widget_analysis = IPyAnalysisWidget(self.tabAnalysis)
+        ipython_layout.addWidget(self.widget_analysis)
 
         return
 
@@ -185,10 +202,13 @@ class FourCircleMainWindow(QMainWindow):
         return roi_list
 
     def calculate_polarization(self, integrated_counts_dict):
-
+        """
+        calculate polarization from a well integrated set of spin up and spin down
+        :param integrated_counts_dict:
+        :return:
+        """
         # TODO FIXME - so far, this is not an elegant solution
-        # print integrated_counts_dict.keys()
-        # 0, '0_upper_bkgd', '0_lower-bkgd'
+        # integrated_counts_dict.keys(): 0, '0_upper_bkgd', '0_lower-bkgd'
 
         exp_number = int(self.ui.lineEdit_exp.text())
         scan_number = int(self.ui.lineEdit_run.text())
@@ -440,7 +460,7 @@ class FourCircleMainWindow(QMainWindow):
 
         # create a dialog/window for the result
         if self._integratedViewWindow is None:
-            self._integratedViewWindow = IntegratedROIView(self)
+            raise NotImplementedError('Integrated view window shall be initialized during Main window init.')
         self._integratedViewWindow.show()
         self._integratedViewWindow.set_integrated_value(integrated_value_dict, roi_color_dict)
         self._integratedViewWindow.set_integration_info(integration_info)

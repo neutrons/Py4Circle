@@ -1,6 +1,6 @@
 #!/bin/sh
-python setup.py pyuic
 python setup.py build
+python setup.py pyuic
 if [ $1 ]; then
     CMD=$1
 else

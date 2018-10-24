@@ -3,71 +3,62 @@ import sys
 import os
 import re
 import versioneer  # https://github.com/warner/python-versioneer
+from shutil import copyfile
 
 from setuptools import setup, find_packages
 
 if sys.argv[-1] == 'pyuic':
-    # convert the UI in designer (for the application)
+    # copy UI files in designer to builds
     indir = 'designer'
-    outdir = 'py4circle/interface/gui'
+    outdir = 'build/lib/py4circle/interface/gui'
     files = os.listdir(indir)
-    files = [os.path.join('designer', item) for item in files]
+    # UI file only
     files = [item for item in files if item.endswith('.ui')]
+    # add directory
+    files = [os.path.join(indir, item) for item in files]
 
-    try:
-        import PyQt5
-        pyui_ver = 5
-    except ImportError:
-        pyui_ver = 4
+    # try:
+    #     import PyQt5
+    #     pyui_ver = 5
+    # except ImportError:
+    #     pyui_ver = 4
     
     done = 0
-    for inname in files:
-        base_inname = os.path.basename(inname)
-        outname = 'ui_' + base_inname.replace('.ui', '.py')
-        outname = os.path.join(outdir, outname)
-        if os.path.exists(outname):
-            if os.stat(inname).st_mtime < os.stat(outname).st_mtime:
-                continue
-        print("Converting '%s' to '%s'" % (inname, outname))
+    for ui_name in files:
+        # target name
+        base_ui_name = os.path.basename(ui_name)
+        dest_ui_name = os.path.join(outdir, base_ui_name)
+        # need to copy?
+        if os.path.exists(dest_ui_name) and os.stat(ui_name).st_mtime < os.stat(dest_ui_name).st_mtime:
+            continue
+        # copy UI file to target
+        copyfile(ui_name, dest_ui_name)
+        print("Copied '%s' to '%s'" % (ui_name, dest_ui_name))
 
-        try:
-            # check the key package to determine whether the build shall be Qt4 or Qt5
-            import PyQt5
-            from qtconsole.inprocess import QtInProcessKernelManager
-            ver = 5
-            print ('Qt5 is used!')
-        except ImportError:
-            ver = 4
-            print ('Qt4 is used!')
+        # outname = 'ui_' + base_inname.replace('.ui', '.py')
+        # outname = os.path.join(outdir, outname)
+        # if os.path.exists(outname):
+        #     if os.stat(inname).st_mtime < os.stat(outname).st_mtime:
+        #         continue
 
-        command = "pyuic%d %s -o %s" % (ver, inname, outname)
-        os.system(command)
+        # try:
+        #     # check the key package to determine whether the build shall be Qt4 or Qt5
+        #     import PyQt5
+        #     from qtconsole.inprocess import QtInProcessKernelManager
+        #     ver = 5
+        #     print ('Qt5 is used!')
+        # except ImportError:
+        #     ver = 4
+        #     print ('Qt4 is used!')
+
+        # command = "pyuic%d %s -o %s" % (ver, inname, outname)
+        # os.system(command)
         done += 1
+    # END-FOR
 
     if not done:
-        print("Did not convert any '.ui' files")
+        print("No new '.ui' files found and copied")
 
-    # convert the UI in test/widgettest (for the application)
-    # indir = 'tests/widgets'
-    # outdir = 'py4circle/interface/gui'  # all UI shall be in the same directory with widgets module to avoid importing issue
-    # files = os.listdir(indir)
-    # files = [os.path.join(indir, item) for item in files]
-    # files = [item for item in files if item.endswith('.ui')]
-
-    # done = 0
-    # for inname in files:
-    #     base_inname = os.path.basename(inname)
-    #     outname = 'uitest_' + base_inname.replace('.ui', '.py')
-    #     outname = os.path.join(outdir, outname)
-    #     if os.path.exists(outname):
-    #         if os.stat(inname).st_mtime < os.stat(outname).st_mtime:
-    #             continue
-    #     print("Converting '%s' to '%s'" % (inname, outname))
-    #     command = "pyuic%d %s -o %s"  % (pyui_ver, inname, outname)
-    #     os.system(command)
-    #     done += 1
-    # if not done:
-    #     print("Did not convert any '.ui' files")
     sys.exit(0)
 
 ###################################################################
