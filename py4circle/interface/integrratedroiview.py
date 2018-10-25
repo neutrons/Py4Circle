@@ -1,13 +1,15 @@
 try:
     from PyQt5 import QtCore
-    from PyQt5.QtWidgets import QMainWindow, QFileDialog, QMessageBox
+    from PyQt5.QtWidgets import QMainWindow, QFileDialog, QMessageBox, QVBoxLayout
+    from PyQt5.uic import loadUi as load_ui
 except ImportError:
     from PyQt4 import QtCore
-    from PyQt4.QtGui import QMainWindow, QFileDialog, QMessageBox
-# import gui.ResultViewWindow_ui
-from gui.ui_ResultViewWindow import Ui_MainWindow as ResultView_UI_MainWindow
-
+    from PyQt4.QtGui import QMainWindow, QFileDialog, QMessageBox, QVBoxLayout
+    from PyQt4.uic import loadUi as load_ui
+import os
 import numpy as np
+from py4circle.interface.gui.resultview1d import ResultView1D
+from py4circle.interface.gui.tablewidgets import IntegratedCountsTable
 
 
 class IntegratedROIView(QMainWindow):
@@ -23,8 +25,12 @@ class IntegratedROIView(QMainWindow):
         self._my_parent = parent
 
         # set up UI
-        self.ui = ResultView_UI_MainWindow()
-        self.ui.setupUi(self)
+        ui_path = os.path.join(os.path.dirname(__file__), 'gui/ResultViewWindow.ui')
+        self.ui = load_ui(ui_path, baseinstance=self)
+        self. _promote_widgets()
+
+        # self.ui = ResultView_UI_MainWindow()
+        # self.ui.setupUi(self)
 
         # initialize widget
         self.ui.graphicsView_result.set_subplots(1, 1)
@@ -42,6 +48,20 @@ class IntegratedROIView(QMainWindow):
         self.ui.actionCalculate_Polarization.triggered.connect(self.do_calculate_polarization)
 
         return
+
+    def _promote_widgets(self):
+        graphicsView_result_layout = QVBoxLayout()
+        self.ui.frame_graphicsView_result.setLayout(graphicsView_result_layout)
+        self.ui.graphicsView_result = ResultView1D(self)
+        graphicsView_result_layout.addWidget(self.ui.graphicsView_result)
+
+        tableView_result_layout = QVBoxLayout()
+        self.ui.frame_tableView_result.setLayout(tableView_result_layout)
+        self.ui.tableView_result = IntegratedCountsTable(self)
+        tableView_result_layout.addWidget(self.ui.tableView_result)
+
+        return
+
 
     @staticmethod
     def calculate_by_formula(formula, value_dict):

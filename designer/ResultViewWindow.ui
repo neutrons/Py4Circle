@@ -16,7 +16,14 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
     <item row="0" column="0">
-     <widget class="ResultView1D" name="graphicsView_result"/>
+     <widget class="QFrame" name="frame_graphicsView_result">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+     </widget>
     </item>
     <item row="1" column="0">
      <layout class="QHBoxLayout" name="horizontalLayout">
@@ -83,7 +90,14 @@
      </layout>
     </item>
     <item row="0" column="1">
-     <widget class="IntegratedCountsTable" name="tableView_result"/>
+     <widget class="QFrame" name="frame_tableView_result">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+     </widget>
     </item>
     <item row="1" column="1">
      <layout class="QVBoxLayout" name="verticalLayout">
@@ -162,18 +176,6 @@
    </property>
   </action>
  </widget>
- <customwidgets>
-  <customwidget>
-   <class>ResultView1D</class>
-   <extends>QGraphicsView</extends>
-   <header>resultview1d.h</header>
-  </customwidget>
-  <customwidget>
-   <class>IntegratedCountsTable</class>
-   <extends>QTableView</extends>
-   <header>tablewidgets.h</header>
-  </customwidget>
- </customwidgets>
  <resources/>
  <connections/>
 </ui>
