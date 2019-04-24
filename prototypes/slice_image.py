@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 from scipy.ndimage.filters import gaussian_filter
-from skimage.feature import canny
+# from skimage.feature import canny
 from scipy.ndimage import measurements
 
 def read_ub_from_scan(filename):
@@ -365,22 +365,22 @@ def get_flipping_ratio(filepath_up, filepath_dw, sigma=3, shape_in=None):
         metadata['rejection'] = 'no peak'
         return 0, 0, metadata
     else:
-        #min_val = min(image_up.min(), image_dw.min())
-        #max_val = max(image_up.max(), image_dw.max())
-        #
-        #f, ax = plt.subplots(ncols=2, nrows=3)
-        #ax[0,0].imshow(image_up, vmin=min_val, vmax=max_val)
-        #ax[0,1].imshow(image_dw, vmin=min_val, vmax=max_val)
-        #ax[1,0].imshow(np.where(padded_peak_region, image_up, 0),
-        #               vmin=min_val,
-        #               vmax=max_val)
-        #ax[1,1].imshow(np.where(padded_peak_region, image_dw, 0),
-        #               vmin=min_val,
-        #               vmax=max_val)
-        #ax[2,0].imshow(padded_peak_region)
-        #ax[2,1].imshow(background)
-        #f.tight_layout()
-        #plt.show()
+        min_val = min(image_up.min(), image_dw.min())
+        max_val = max(image_up.max(), image_dw.max())
+
+        f, ax = plt.subplots(ncols=2, nrows=3)
+        ax[0,0].imshow(image_up, vmin=min_val, vmax=max_val)
+        ax[0,1].imshow(image_dw, vmin=min_val, vmax=max_val)
+        ax[1,0].imshow(np.where(padded_peak_region, image_up, 0),
+                       vmin=min_val,
+                       vmax=max_val)
+        ax[1,1].imshow(np.where(padded_peak_region, image_dw, 0),
+                       vmin=min_val,
+                       vmax=max_val)
+        ax[2,0].imshow(padded_peak_region)
+        ax[2,1].imshow(background)
+        f.tight_layout()
+        plt.show()
         
         i_up, s_up = get_intensity_from_image(image_up,
                                             padded_peak_region,
@@ -444,10 +444,11 @@ def process_scan(exp, scan, wvln, mag_field, polarisation, radius):
 
     
     # Setting up file list
-    file_directory = ('C:\\Users\\Emil\\Documents\\Uddannelse\\'
-                    + 'PhD\\PND susceptibility\\Co_PND_HFIR\\'
-                    + 'HFIR, E18\\Data download\\HB3A\\exp715\\Datafiles\\'
-                    )
+    # file_directory = ('C:\\Users\\Emil\\Documents\\Uddannelse\\'
+    #                 + 'PhD\\PND susceptibility\\Co_PND_HFIR\\'
+    #                 + 'HFIR, E18\\Data download\\HB3A\\exp715\\Datafiles\\'
+    #                 )
+    file_directory = '/HFIR/HB3A/exp715/Datafiles/'
     
     
 if __name__ == '__main__':
@@ -464,45 +465,41 @@ if __name__ == '__main__':
     
     
     # Setting up file list
-    file_directory = ('C:\\Users\\Emil\\Documents\\Uddannelse\\'
-                    + 'PhD\\PND susceptibility\\Co_PND_HFIR\\'
-                    + 'HFIR, E18\\Data download\\HB3A\\exp715\\Datafiles\\'
-                    )
-    
+    # file_directory = ('C:\\Users\\Emil\\Documents\\Uddannelse\\'
+    #                 + 'PhD\\PND susceptibility\\Co_PND_HFIR\\'
+    #                 + 'HFIR, E18\\Data download\\HB3A\\exp715\\Datafiles\\'
+    #                 )
+    file_directory = '/HFIR/HB3A/exp715/Datafiles/'
+                       
     scanfile = 'HB3A_exp{0:04d}_scan{1:04d}.dat'.format(exp, scan)
     file_beginning = 'HB3A_exp{0}_scan{1:04d}_'.format(exp, scan)
     
     ub = read_ub_from_scan(file_directory+scanfile).T.flatten(order='F')
     fill_shape = create_circle_shape(radius)
     
-    files = [f for f in os.listdir(file_directory)
+    files = [f for f in sorted(os.listdir(file_directory))
             if f.startswith(file_beginning)
             ]
+    print files
             
     files = [(files[int(2*n)], files[int(2*n+1)])
             for n in range(int(len(files)/2))
             ]
-            
-    #for refln_number in range(len(files)):
-    #    print(refln_number)
-    #    image_up = load_image_from_scan(file_directory+files[refln_number][0])[0]
-    #    image_dw = load_image_from_scan(file_directory+files[refln_number][1])[0]
-    #    common_peak = get_common_peak(image_up, image_dw)
-    #    peak_border = get_peak_border(common_peak)
-    #    peak_padding = add_padding_w_circles(peak_border, fill_shape)
-    #    peak_padding = punch_out_border_and_small_patches(peak_padding, fill_shape)
-    #    if np.sum(common_peak) <= np.sum(fill_shape):
-    #        continue
-    #    else:
-    #        plt.imshow(peak_padding)
-    #        plt.show()
-    
-    #get_flipping_ratio(file_directory+files[refln_number][0],
+
+
+
+    for refln_number in range(len(files)):
+        fr, sfr, metadata = get_flipping_ratio(file_directory+files[refln_number][0],
+                                               file_directory+files[refln_number][1],
+                                               shape_in=fill_shape)
+
+
+
+    #    #get_flipping_ratio(file_directory+files[refln_number][0],
     #                   file_directory+files[refln_number][1],
     #                   sigma=sigma_used,
     #                   shape_in=fill_shape)
-    
-    #image_dw = load_image_from_scan(file_directory+files[refln_number][1])[0]
+    #    #image_dw = load_image_from_scan(file_directory+files[refln_number][1])[0]
     #common_peak = get_common_peak(image_up, image_dw)
     #peak_border = get_peak_border(common_peak)
     #peak_padding = add_padding_w_circles(peak_border, fill_shape)
