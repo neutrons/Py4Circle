@@ -166,7 +166,7 @@ Desktop.ini
 .idea/
 
 # prototype
-prototypes/
+# prototypes/
 
 # Mac OS X Finder
 .DS_Store
