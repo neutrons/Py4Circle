@@ -102,14 +102,16 @@ class FourCirclePolarizedNeutronProcessor(object):
 
     def calculate_polarization(self, exp_number, scan_number, pt_list, peak_count_vec, upper_bkgd_count_vec,
                                lower_bkgd_count_vec, flag):
-        """ calculate polarization
-        :param exp_number:
-        :param scan_number:
-        :param pt_list:
-        :param peak_count_vec:
-        :param upper_bkgd_count_vec:
-        :param lower_bkgd_count_vec:
-        :return:
+        """
+        calculate polarization
+        @param exp_number:
+        @param scan_number:
+        @param pt_list:
+        @param peak_count_vec:
+        @param upper_bkgd_count_vec:
+        @param lower_bkgd_count_vec:
+        @param flag: method of how the polarization is calculated and thus file name
+        @return:
         """
         pt_hkl_dict = self.retrieve_hkl_from_spice(exp_number, scan_number)
 
