@@ -198,24 +198,31 @@ class FourCircleMainWindow(QMainWindow):
         lower_bkgd_count_vec = integrated_counts_dict['0_lower_bkgd'][1]
 
         # vertical
-        polarizers, single_spins = \
-            self.controller.calculate_polarization(exp_number, scan_number, pt_list, peak_count_vec,
-                                                   upper_bkgd_count_vec, lower_bkgd_count_vec, flag='vertical')
+        DEBUG_SKIP = True
+        if DEBUG_SKIP:
+            polarizers, single_spins = \
+                self.controller.calculate_polarization(exp_number, scan_number, pt_list, peak_count_vec,
+                                                       upper_bkgd_count_vec, lower_bkgd_count_vec, flag='vertical')
 
-        # horizontal
-        left_bkgd_count_vec = integrated_counts_dict['0_left_bkgd'][1]
-        right_bkgd_count_vec = integrated_counts_dict['0_right_bkgd'][1]
-        left_right_polarizers, left_right_single_spins = \
-            self.controller.calculate_polarization(exp_number, scan_number, pt_list, peak_count_vec,
-                                                   left_bkgd_count_vec, right_bkgd_count_vec, flag='horizontal')
+            # horizontal
+            left_bkgd_count_vec = integrated_counts_dict['0_left_bkgd'][1]
+            right_bkgd_count_vec = integrated_counts_dict['0_right_bkgd'][1]
+            left_right_polarizers, left_right_single_spins = \
+                self.controller.calculate_polarization(exp_number, scan_number, pt_list, peak_count_vec,
+                                                       left_bkgd_count_vec, right_bkgd_count_vec, flag='horizontal')
 
-        # encircle
-        outer_bkgd_count_vec = integrated_counts_dict['0_encircle'][1]
-        outer_bkgd_count_vec = outer_bkgd_count_vec - peak_count_vec
-        zero_count_vec = np.zeros(shape=outer_bkgd_count_vec.shape, dtype=outer_bkgd_count_vec.dtype)
-        encircle_polarizers, encircle_single_spins = \
-            self.controller.calculate_polarization(exp_number, scan_number, pt_list, peak_count_vec,
-                                                   outer_bkgd_count_vec, zero_count_vec, flag='outer')
+            # encircle
+            outer_bkgd_count_vec = integrated_counts_dict['0_encircle'][1]
+            outer_bkgd_count_vec = outer_bkgd_count_vec - peak_count_vec
+            zero_count_vec = np.zeros(shape=outer_bkgd_count_vec.shape, dtype=outer_bkgd_count_vec.dtype)
+            encircle_polarizers, encircle_single_spins = \
+                self.controller.calculate_polarization(exp_number, scan_number, pt_list, peak_count_vec,
+                                                       outer_bkgd_count_vec, zero_count_vec, flag='outer')
+        # END-IF-DEBUG_SKIP
+
+        # Emil
+        self.controller.calculate_polarization_emil(exp_number=exp_number, scan_number=scan_number,
+                                                    pt_list=pt_list, radius=10)
 
         self._polarizers = polarizers
 

@@ -109,8 +109,6 @@ class FourCirclePolarizedNeutronProcessor(object):
         """
         import emil_flip_calculation
 
-        pt_hkl_dict = self.retrieve_hkl_from_spice(exp_number, scan_number)
-
         # TODO FIXME - Pt number is all odd due to SPICE bug!
         if len(pt_list) % 2 == 1:
             print ('Number of Pts. = {} is odd... This is wrong! Talk with Huibo. \nFYI: Pt list: {}'
@@ -126,11 +124,12 @@ class FourCirclePolarizedNeutronProcessor(object):
             # check spin up and spin down shall have same pt.
             spin_up_pt = pt_list[2*pair_index]
             spin_down_pt = pt_list[2*pair_index + 1]
-            spin_up_hkl = pt_hkl_dict[spin_up_pt]
-            spin_down_hkl = pt_hkl_dict[spin_down_pt]
-            if sum((spin_up_hkl - spin_down_hkl)**2) >= 0.25:
-                raise RuntimeError('For pt {} and {}, HKL {} and {} shall be same!'
-                                   ''.format(spin_up_pt, spin_down_pt, spin_up_hkl, spin_down_hkl))
+            spin_up_xml = os.path.join('/HFIR/HB3A/exp{}/Datafiles/'.format(exp_number),
+                                       'HB3A_exp{0}_scan{1:04d}_{2:04d}.xml'
+                                       ''.format(exp_number, scan_number, spin_up_pt))
+            spin_down_xml = os.path.join('/HFIR/HB3A/exp{}/Datafiles/'.format(exp_number),
+                                         'HB3A_exp{0}_scan{1:04d}_{2:04d}.xml'
+                                         ''.format(exp_number, scan_number, spin_down_pt))
 
             fr, sfr, metadata = emil_flip_calculation.get_flipping_ratio(spin_up_xml, spin_down_xml, sigma=3,
                                                                          shape_in=circle_shape)

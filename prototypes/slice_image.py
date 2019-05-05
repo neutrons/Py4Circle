@@ -480,12 +480,10 @@ if __name__ == '__main__':
     files = [f for f in sorted(os.listdir(file_directory))
             if f.startswith(file_beginning)
             ]
-    print files
-            
+
     files = [(files[int(2*n)], files[int(2*n+1)])
             for n in range(int(len(files)/2))
             ]
-
 
 
     for refln_number in range(len(files)):
