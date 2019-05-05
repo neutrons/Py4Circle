@@ -100,6 +100,43 @@ class FourCirclePolarizedNeutronProcessor(object):
 
         return ws
 
+    def calculate_polarization_emil(self, exp_number, scan_number, pt_list, radius=10):
+        """ Calculate polarization (flip ratio) by Emil's algorithm
+        :param exp_number:
+        :param scan_number:
+        :param pt_list:
+        :return:
+        """
+        import emil_flip_calculation
+
+        pt_hkl_dict = self.retrieve_hkl_from_spice(exp_number, scan_number)
+
+        # TODO FIXME - Pt number is all odd due to SPICE bug!
+        if len(pt_list) % 2 == 1:
+            print ('Number of Pts. = {} is odd... This is wrong! Talk with Huibo. \nFYI: Pt list: {}'
+                   ''.format(len(pt_list), pt_list))
+        # END-IF
+
+        polarization_list = list()
+        single_spin_counts = list()
+
+        circle_shape = emil_flip_calculation.create_circle_shape(radius)
+
+        for pair_index in range(len(pt_list)/2):
+            # check spin up and spin down shall have same pt.
+            spin_up_pt = pt_list[2*pair_index]
+            spin_down_pt = pt_list[2*pair_index + 1]
+            spin_up_hkl = pt_hkl_dict[spin_up_pt]
+            spin_down_hkl = pt_hkl_dict[spin_down_pt]
+            if sum((spin_up_hkl - spin_down_hkl)**2) >= 0.25:
+                raise RuntimeError('For pt {} and {}, HKL {} and {} shall be same!'
+                                   ''.format(spin_up_pt, spin_down_pt, spin_up_hkl, spin_down_hkl))
+
+            fr, sfr, metadata = emil_flip_calculation.get_flipping_ratio(spin_up_xml, spin_down_xml, sigma=3,
+                                                                         shape_in=circle_shape)
+
+        # END-FOR
+
     def calculate_polarization(self, exp_number, scan_number, pt_list, peak_count_vec, upper_bkgd_count_vec,
                                lower_bkgd_count_vec, flag):
         """
