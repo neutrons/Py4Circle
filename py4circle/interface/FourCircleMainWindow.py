@@ -20,8 +20,7 @@ DETECTOR_SIZE = 256
 
 
 class FourCircleMainWindow(QMainWindow):
-    """
-    blabla
+    """ Main window object for 4-circle polarized neutron reduction
     """
     TabPage = {'ROI Setup': 1,
                'Calculate UB': 3,

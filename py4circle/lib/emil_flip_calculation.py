@@ -110,15 +110,16 @@ def add_padding_w_circles(peak_border_b, fill_shape):
         """
         # get radius
         fill_shape_radius = int((fill_circle_shape.shape[0] - 1) / 2)
-        print ('[UNDERSTAND] Fill shape R = {}'.format(fill_circle_shape))
+        # print ('[UNDERSTAND] Fill shape R.shape = {}; Image.shape = {}'
+        #        ''.format(fill_circle_shape.shape, image.shape))
 
         # original sub image around circle center
-        original = image[center[0] - fill_circle_shape:center[0] + fill_circle_shape + 1,
-                         center[1] - fill_circle_shape:center[1] + fill_circle_shape + 1]
+        row_start, row_stop = center[0] - fill_shape_radius, center[0] + fill_shape_radius + 1
+        col_start, col_stop = center[1] - fill_shape_radius, center[1] + fill_shape_radius + 1
+        original = image[row_start:row_stop, col_start:col_stop]
 
         # modify original image
-        image[center[0] - fill_circle_shape:center[0] + fill_circle_shape + 1,
-              center[1] - fill_circle_shape:center[1] + fill_circle_shape + 1] = np.logical_or(original, fill_circle_shape)
+        image[row_start:row_stop, col_start:col_stop] = np.logical_or(original, fill_circle_shape)
 
         return
 
