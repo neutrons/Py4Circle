@@ -100,16 +100,54 @@ class FourCirclePolarizedNeutronProcessor(object):
 
         return ws
 
-    def calculate_polarization(self, exp_number, scan_number, pt_list, peak_count_vec, upper_bkgd_count_vec,
-                               lower_bkgd_count_vec, flag):
-        """ calculate polarization
+    def calculate_polarization_emil(self, exp_number, scan_number, pt_list, radius=10):
+        """ Calculate polarization (flip ratio) by Emil's algorithm
         :param exp_number:
         :param scan_number:
         :param pt_list:
-        :param peak_count_vec:
-        :param upper_bkgd_count_vec:
-        :param lower_bkgd_count_vec:
         :return:
+        """
+        import emil_flip_calculation
+
+        # TODO FIXME - Pt number is all odd due to SPICE bug!
+        if len(pt_list) % 2 == 1:
+            print ('Number of Pts. = {} is odd... This is wrong! Talk with Huibo. \nFYI: Pt list: {}'
+                   ''.format(len(pt_list), pt_list))
+        # END-IF
+
+        polarization_list = list()
+        single_spin_counts = list()
+
+        circle_shape = emil_flip_calculation.create_circle_shape(radius)
+
+        for pair_index in range(len(pt_list)/2):
+            # check spin up and spin down shall have same pt.
+            spin_up_pt = pt_list[2*pair_index]
+            spin_down_pt = pt_list[2*pair_index + 1]
+            spin_up_xml = os.path.join('/HFIR/HB3A/exp{}/Datafiles/'.format(exp_number),
+                                       'HB3A_exp{0}_scan{1:04d}_{2:04d}.xml'
+                                       ''.format(exp_number, scan_number, spin_up_pt))
+            spin_down_xml = os.path.join('/HFIR/HB3A/exp{}/Datafiles/'.format(exp_number),
+                                         'HB3A_exp{0}_scan{1:04d}_{2:04d}.xml'
+                                         ''.format(exp_number, scan_number, spin_down_pt))
+
+            fr, sfr, metadata = emil_flip_calculation.get_flipping_ratio(spin_up_xml, spin_down_xml, sigma=3,
+                                                                         shape_in=circle_shape)
+
+        # END-FOR
+
+    def calculate_polarization(self, exp_number, scan_number, pt_list, peak_count_vec, upper_bkgd_count_vec,
+                               lower_bkgd_count_vec, flag):
+        """
+        calculate polarization
+        @param exp_number:
+        @param scan_number:
+        @param pt_list:
+        @param peak_count_vec:
+        @param upper_bkgd_count_vec:
+        @param lower_bkgd_count_vec:
+        @param flag: method of how the polarization is calculated and thus file name
+        @return:
         """
         pt_hkl_dict = self.retrieve_hkl_from_spice(exp_number, scan_number)
 

@@ -135,7 +135,7 @@ if __name__ == "__main__":
     main
     """
     scripts = ['scripts/four']
-    test_scripts = [ ]
+    test_scripts = ['tests/polarized_neutron_processor_test.py']
     scripts.extend(test_scripts)
 
     setup(
